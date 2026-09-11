@@ -27,9 +27,12 @@
   },
   "devDependencies": {
     "@electron/rebuild": "^4.2.0",
+    "autocannon": "^8.0.0",
     "concurrently": "^9.1.0",
     "electron": "^33.4.11",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "lighthouse": "^13.4.1",
+    "puppeteer-core": "^25.5.0"
   },
   "build": {
     "appId": "com.ygrid.grilles-notation",
@@ -53,12 +56,17 @@
       "perMachine": false
     },
     "mac": {
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "category": "public.app-category.education",
       "identity": null
     },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "category": "Education"
     }
   }

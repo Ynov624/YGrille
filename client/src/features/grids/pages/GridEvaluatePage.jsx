@@ -9,6 +9,7 @@ import { computeGrade, computeCategoryGrades, criterionPoints, formatGrade, form
 import { exportStudentPdf, exportAllStudentsZip } from "../pdf.js";
 import { exportGradesCsv } from "../csvExport.js";
 import Loading from "../../../components/Loading.jsx";
+import { useDocumentTitle } from "../../../hooks/useDocumentTitle.js";
 
 const markKey = (studentId, criterionId) => `${studentId}:${criterionId}`;
 
@@ -63,6 +64,7 @@ function CriteriaTableHeader({ levels }) {
 export default function GridEvaluatePage() {
   const { id } = useParams();
   const [grid, setGrid] = useState(null);
+  useDocumentTitle(grid ? `Évaluer - ${grid.name}` : "Évaluer");
   const [students, setStudents] = useState(null);
   const [groups, setGroups] = useState(null);
   const [marks, setMarks] = useState({});
@@ -239,7 +241,7 @@ export default function GridEvaluatePage() {
   if (!grid || !students || !groups) {
     return (
       <main className="page">
-        {error ? <p className="error-box">{error}</p> : <Loading />}
+        {error ? <p className="error-box" role="alert">{error}</p> : <Loading />}
       </main>
     );
   }
@@ -273,7 +275,7 @@ export default function GridEvaluatePage() {
       </div>
 
       {error && (
-        <div className="error-box">
+        <div className="error-box" role="alert">
           <p>{error}</p>
         </div>
       )}
@@ -286,10 +288,11 @@ export default function GridEvaluatePage() {
         </div>
       ) : (
         <>
-          <div className="view-toggle">
+          <div className="view-toggle" role="group" aria-label="Mode d'évaluation">
             <button
               type="button"
               className={`btn ghost small${mode === "individuel" ? " active" : ""}`}
+              aria-pressed={mode === "individuel"}
               onClick={() => switchMode("individuel")}
             >
               Individuel
@@ -297,6 +300,7 @@ export default function GridEvaluatePage() {
             <button
               type="button"
               className={`btn ghost small${mode === "groupe" ? " active" : ""}`}
+              aria-pressed={mode === "groupe"}
               onClick={() => switchMode("groupe")}
             >
               Groupe
@@ -320,6 +324,7 @@ export default function GridEvaluatePage() {
                         key={item.id}
                         type="button"
                         className={`eval-sidebar-item${i === index ? " active" : ""}`}
+                        aria-current={i === index ? "true" : undefined}
                         onClick={() => setIndex(i)}
                       >
                         <span className="eval-sidebar-item-name">
@@ -327,8 +332,11 @@ export default function GridEvaluatePage() {
                         </span>
                         <span
                           className={`eval-status-dot ${complete ? "complete" : "incomplete"}`}
-                          title={complete ? "Évaluation complète" : "Évaluation incomplète"}
+                          aria-hidden="true"
                         />
+                        <span className="sr-only">
+                          {complete ? "Évaluation complète" : "Évaluation incomplète"}
+                        </span>
                       </button>
                     );
                   })}

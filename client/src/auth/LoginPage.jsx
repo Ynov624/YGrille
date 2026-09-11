@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "./AuthContext.jsx";
+import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
+
+const MODE_TITLES = { login: "Connexion", register: "Créer un compte", verify: "Vérifier l'e-mail" };
 
 export default function LoginPage() {
   const { login, register, verifyEmail, resendCode } = useAuth();
   const [mode, setMode] = useState("login"); // "login" | "register" | "verify"
+  useDocumentTitle(MODE_TITLES[mode]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -79,7 +83,7 @@ export default function LoginPage() {
           {mode === "register" && (
             <label className="field" style={{ marginBottom: 14 }}>
               <span>Nom</span>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Prénom Nom" />
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Prénom Nom" autoComplete="name" />
             </label>
           )}
 
@@ -91,6 +95,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="prenom.nom@ynov.com"
+                autoComplete="email"
                 autoFocus
                 required
               />
@@ -106,6 +111,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
                 minLength={mode === "register" ? 12 : undefined}
+                autoComplete={mode === "register" ? "new-password" : "current-password"}
                 required
               />
               {mode === "register" && (
@@ -132,9 +138,9 @@ export default function LoginPage() {
           )}
         </section>
 
-        {info && <div className="info-box">{info}</div>}
+        {info && <div className="info-box" role="status">{info}</div>}
         {errors && (
-          <div className="error-box">
+          <div className="error-box" role="alert">
             <ul>{errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
           </div>
         )}

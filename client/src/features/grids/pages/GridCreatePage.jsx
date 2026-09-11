@@ -9,7 +9,7 @@ const initialCategoryId = crypto.randomUUID();
 const initial = {
   name: "",
   levels: DEFAULT_LEVELS.map((l) => ({ ...l })),
-  categories: [{ id: initialCategoryId, name: "" }],
+  categories: [{ id: initialCategoryId, name: "", deliverable: "" }],
   criteria: [
     { id: crypto.randomUUID(), name: "", weight: 1, categoryId: initialCategoryId },
     { id: crypto.randomUUID(), name: "", weight: 1, categoryId: initialCategoryId },

@@ -6,7 +6,7 @@ import { badRequest } from "./errors.js";
  * {
  *   name: string,
  *   levels: [{ label, pct }] × 5,
- *   categories: [{ name }] (≥ 1),
+ *   categories: [{ name, deliverable? }] (≥ 1),
  *   criteria: [{ name, weight, categoryIndex }] (≥ 1, somme des poids > 0)
  * }
  */
@@ -34,8 +34,9 @@ export function validateGridPayload(body) {
   if (categories.length === 0) errors.push("Ajoutez au moins une catégorie.");
   const cleanCategories = categories.map((cat, i) => {
     const cname = typeof cat?.name === "string" ? cat.name.trim() : "";
+    const deliverable = typeof cat?.deliverable === "string" ? cat.deliverable.trim() : "";
     if (!cname) errors.push(`La catégorie ${i + 1} doit avoir un nom.`);
-    return { name: cname };
+    return { name: cname, deliverable };
   });
 
   const criteria = Array.isArray(body?.criteria) ? body.criteria : [];
@@ -76,6 +77,21 @@ export function validateStudentPayload(body) {
 
   if (errors.length > 0) throw badRequest("Élève invalide.", errors);
   return { lastName, firstName, comment };
+}
+
+/** Valide et normalise le payload de création/renommage d'une promo : { name }. */
+export function validatePromoPayload(body) {
+  const name = typeof body?.name === "string" ? body.name.trim() : "";
+  if (!name) throw badRequest("Promo invalide.", ["Le nom de la promo est obligatoire."]);
+  return { name };
+}
+
+/** Valide et normalise le payload d'un élève de promo : { lastName, firstName }. */
+export function validatePromoStudentPayload(body) {
+  const lastName = typeof body?.lastName === "string" ? body.lastName.trim() : "";
+  const firstName = typeof body?.firstName === "string" ? body.firstName.trim() : "";
+  if (!lastName) throw badRequest("Élève invalide.", ["Le nom de l'élève est obligatoire."]);
+  return { lastName, firstName };
 }
 
 /** Valide le payload de saisie d'une note de groupe : { levelPosition } (entier 0..4). */

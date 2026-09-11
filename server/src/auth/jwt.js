@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 
 const EXPIRES_IN = "7d";
+const ADMIN_EXPIRES_IN = "2h";
 
 function getSecret() {
   const secret = process.env.JWT_SECRET;
@@ -32,4 +33,26 @@ export function getTokenFromHeader(req) {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) return null;
   return header.slice("Bearer ".length);
+}
+
+/**
+ * Token court (2h) attestant l'accès admin (mot de passe partagé, cf.
+ * controllers/admin.controller.js), distinct du token utilisateur : il transite dans son
+ * propre header (`X-Admin-Token`, cf. getAdminTokenFromHeader) pour ne pas remplacer le
+ * `Authorization: Bearer <token>` déjà utilisé par requireAuth sur les mêmes requêtes.
+ */
+export function signAdminToken() {
+  return jwt.sign({ role: "admin" }, getSecret(), { expiresIn: ADMIN_EXPIRES_IN });
+}
+
+/** Vérifie un token admin et retourne son payload, ou `null` s'il est absent/invalide/expiré. */
+export function verifyAdminToken(token) {
+  const payload = verifyToken(token);
+  return payload?.role === "admin" ? payload : null;
+}
+
+/** Extrait le token du header `X-Admin-Token`, ou `null` s'il est absent. */
+export function getAdminTokenFromHeader(req) {
+  const header = req.headers["x-admin-token"];
+  return typeof header === "string" && header ? header : null;
 }

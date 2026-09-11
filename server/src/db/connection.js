@@ -14,6 +14,13 @@ export const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   multipleStatements: true,
+  // Le MySQL hébergé (Clever Cloud) sert un certificat auto-généré, pas signé par une
+  // autorité publique : `rejectUnauthorized: true` (validation via le magasin de CA du
+  // système) échoue avec SELF_SIGNED_CERT_IN_CHAIN. On chiffre donc la connexion sans
+  // vérifier l'identité du serveur (protège de l'écoute passive sur le réseau, pas d'un
+  // MITM actif) plutôt que d'épingler ce certificat précis, qui casserait toutes les
+  // installs si Clever Cloud le régénère (migration/maintenance de leur côté).
+  ssl: { rejectUnauthorized: false },
   // Sans CLIENT_FOUND_ROWS, `affectedRows` sur un UPDATE ne compte que les lignes
   // dont une valeur a réellement changé. Le code des services teste `affectedRows`
   // pour détecter une ressource introuvable (comme `changes` en SQLite, qui compte
@@ -42,6 +49,7 @@ export async function initDatabase() {
   const schema = readFileSync(join(here, "schema.sql"), "utf-8");
   await pool.query(schema);
   await addColumnIfMissing("users", "email_verified_at", "DATETIME");
+  await addColumnIfMissing("categories", "deliverable", "TEXT NOT NULL DEFAULT ('')");
 }
 
 // MySQL (contrairement à MariaDB) n'a pas de `ADD COLUMN IF NOT EXISTS` :

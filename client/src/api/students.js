@@ -9,3 +9,5 @@ export const deleteStudent = (gridId, id) =>
   api(`/api/grids/${gridId}/students/${id}`, { method: "DELETE" });
 export const importStudentsCsv = (gridId, csv) =>
   api(`/api/grids/${gridId}/students/import`, { method: "POST", body: { csv } });
+export const importStudentsFromPromo = (gridId, promoId) =>
+  api(`/api/grids/${gridId}/students/import-promo`, { method: "POST", body: { promoId } });

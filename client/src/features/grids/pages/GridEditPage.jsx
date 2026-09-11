@@ -28,7 +28,7 @@ export default function GridEditPage() {
     }
   };
 
-  if (loadError) return <main className="page"><p className="error-box">{loadError}</p></main>;
+  if (loadError) return <main className="page"><p className="error-box" role="alert">{loadError}</p></main>;
   if (!grid) return <main className="page"><Loading /></main>;
 
   return (
@@ -42,7 +42,7 @@ export default function GridEditPage() {
       initial={{
         name: grid.name,
         levels: grid.levels.map((l) => ({ label: l.label, pct: l.pct })),
-        categories: grid.categories.map((c) => ({ id: c.id, name: c.name })),
+        categories: grid.categories.map((c) => ({ id: c.id, name: c.name, deliverable: c.deliverable })),
         criteria: grid.criteria.map((c) => ({ id: c.id, name: c.name, weight: c.weight, categoryId: c.category_id })),
       }}
     />

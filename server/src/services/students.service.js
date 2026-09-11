@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { pool } from "../db/connection.js";
 import { notFound } from "../utils/errors.js";
+import { listPromoStudentsForImport } from "./promos.service.js";
 
 const STUDENT_FIELDS = "id, last_name, first_name, comment, group_id";
 
@@ -49,6 +50,12 @@ export async function importStudents(gridId, userId, entries) {
     conn.release();
   }
   return listStudents(gridId, userId);
+}
+
+/** Importe les élèves d'une promo (gérée dans le panneau admin) dans la grille. */
+export async function importStudentsFromPromo(gridId, userId, promoId) {
+  const entries = await listPromoStudentsForImport(promoId);
+  return importStudents(gridId, userId, entries);
 }
 
 export async function updateStudent(gridId, userId, id, payload) {

@@ -1,13 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchGrids, deleteGrid, duplicateGrid } from "../../../api/grids.js";
+import { fetchGrids, fetchGrid, createGrid, deleteGrid, duplicateGrid } from "../../../api/grids.js";
+import { exportGridJson, parseGridImportFile } from "../jsonTransfer.js";
 import Loading from "../../../components/Loading.jsx";
 import Menu from "../../../components/Menu.jsx";
+import { useDocumentTitle } from "../../../hooks/useDocumentTitle.js";
 
 export default function GridListPage() {
+  useDocumentTitle("Mes grilles");
   const [grids, setGrids] = useState(null);
   const [error, setError] = useState(null);
   const [duplicatingId, setDuplicatingId] = useState(null);
+  const [exportingId, setExportingId] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const fileInput = useRef(null);
+
+  const showError = (e) => setError(e.details?.length ? e.details.join(" ") : e.message);
 
   useEffect(() => {
     fetchGrids().then(setGrids).catch((e) => setError(e.message));
@@ -39,6 +47,39 @@ export default function GridListPage() {
     }
   };
 
+  const exportGrid = async (grid) => {
+    setExportingId(grid.id);
+    setError(null);
+    try {
+      const full = await fetchGrid(grid.id);
+      exportGridJson(full);
+    } catch (e) {
+      showError(e);
+    } finally {
+      setExportingId(null);
+    }
+  };
+
+  const onImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setError(null);
+    try {
+      const payload = await parseGridImportFile(file);
+      const created = await createGrid(payload);
+      setGrids((gs) => [
+        { id: created.id, name: created.name, created_at: created.created_at, criteria_count: created.criteria.length, students_count: 0 },
+        ...gs,
+      ]);
+    } catch (err) {
+      showError(err);
+    } finally {
+      setImporting(false);
+      if (fileInput.current) fileInput.current.value = "";
+    }
+  };
+
   return (
     <main className="page">
       <div className="page-head">
@@ -46,10 +87,28 @@ export default function GridListPage() {
           <h1>Mes grilles</h1>
           <p className="sub">Créez une grille de compétences.</p>
         </div>
-        <Link to="/grilles/nouvelle" className="btn primary">+ Nouvelle grille</Link>
+        <div className="page-head-actions">
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => fileInput.current?.click()}
+            disabled={importing}
+          >
+            {importing ? "Import…" : "Importer"}
+          </button>
+          <input
+            ref={fileInput}
+            type="file"
+            accept=".json,application/json"
+            onChange={onImportFile}
+            disabled={importing}
+            style={{ display: "none" }}
+          />
+          <Link to="/grilles/nouvelle" className="btn primary">+ Nouvelle grille</Link>
+        </div>
       </div>
 
-      {error && <p className="error-box">{error}</p>}
+      {error && <p className="error-box" role="alert">{error}</p>}
       {grids === null && !error && <Loading />}
 
       {grids?.length === 0 && (
@@ -72,7 +131,9 @@ export default function GridListPage() {
                 </span>
               </div>
               <div className="card-actions">
-                <Link to={`/grilles/${g.id}/evaluer`} className="btn primary small">Évaluer</Link>
+                <Link to={`/grilles/${g.id}/evaluer`} className="btn primary small" aria-label={`Évaluer ${g.name}`}>
+                  Évaluer
+                </Link>
                 <Menu label={`Autres actions pour ${g.name}`}>
                   <Link to={`/grilles/${g.id}/eleves`} className="menu-item">Élèves</Link>
                   <Link to={`/grilles/${g.id}/modifier`} className="menu-item">Modifier</Link>
@@ -83,6 +144,14 @@ export default function GridListPage() {
                     disabled={duplicatingId === g.id}
                   >
                     {duplicatingId === g.id ? "Duplication…" : "Dupliquer"}
+                  </button>
+                  <button
+                    type="button"
+                    className="menu-item"
+                    onClick={() => exportGrid(g)}
+                    disabled={exportingId === g.id}
+                  >
+                    {exportingId === g.id ? "Export…" : "Exporter"}
                   </button>
                   <div className="menu-separator" />
                   <button type="button" className="menu-item danger" onClick={() => remove(g)}>

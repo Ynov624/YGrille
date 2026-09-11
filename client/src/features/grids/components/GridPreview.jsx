@@ -11,6 +11,7 @@ export default function GridPreview({ name, levels, categories, criteria }) {
         <td colSpan={levels.length + 2}>
           {cat.name || "Catégorie sans nom"}
           <span className="muted small"> · {totalWeight} pt{totalWeight > 1 ? "s" : ""}</span>
+          {cat.deliverable && <span className="muted small"> · Livrable : {cat.deliverable}</span>}
         </td>
       </tr>,
       ...catCriteria.map((c, i) => (
@@ -25,19 +26,22 @@ export default function GridPreview({ name, levels, categories, criteria }) {
 
   return (
     <div className="grid-preview">
-      <h3>{name || "Grille sans nom"}</h3>
+      <h3 id="grid-preview-title">{name || "Grille sans nom"}</h3>
       <div className="grid-preview-table-wrap">
-        <table className="grid-preview-table">
+        {/* RGAA 5.4 : le titre du tableau existe déjà visuellement (h3 juste au-dessus) —
+            aria-labelledby l'associe programmatiquement plutôt que de dupliquer le texte
+            dans une <caption>. */}
+        <table className="grid-preview-table" aria-labelledby="grid-preview-title">
           <thead>
             <tr>
-              <th>Critère</th>
+              <th scope="col">Critère</th>
               {levels.map((l, i) => (
-                <th key={i}>
+                <th scope="col" key={i}>
                   <span className="level-dot" style={{ background: LEVEL_COLORS[i] }}>{i + 1}</span>
                   <span className="level-header-label">{l.label || `Niveau ${i + 1}`}<br />{Number(l.pct) || 0}%</span>
                 </th>
               ))}
-              <th>Points</th>
+              <th scope="col">Points</th>
             </tr>
           </thead>
           <tbody>{rows}</tbody>

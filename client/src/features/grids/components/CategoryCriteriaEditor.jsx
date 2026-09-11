@@ -5,7 +5,8 @@
 export default function CategoryCriteriaEditor({ categories, criteria, onCategoriesChange, onCriteriaChange }) {
   const setCategory = (idx, patch) =>
     onCategoriesChange(categories.map((c, i) => (i === idx ? { ...c, ...patch } : c)));
-  const addCategory = () => onCategoriesChange([...categories, { id: crypto.randomUUID(), name: "" }]);
+  const addCategory = () =>
+    onCategoriesChange([...categories, { id: crypto.randomUUID(), name: "", deliverable: "" }]);
   const removeCategory = (idx) => onCategoriesChange(categories.filter((_, i) => i !== idx));
 
   const setCriterion = (idx, patch) =>
@@ -45,6 +46,15 @@ export default function CategoryCriteriaEditor({ categories, criteria, onCategor
                 disabled={categories.length <= 1}
               >✕</button>
             </div>
+
+            <label className="field cat-deliverable">
+              <span>Modalité de livrable</span>
+              <input
+                value={cat.deliverable ?? ""}
+                placeholder="Ex : dossier, soutenance, vidéo, code…"
+                onChange={(e) => setCategory(ci, { deliverable: e.target.value })}
+              />
+            </label>
 
             <div className="criteria-editor">
               {catCriteria.length === 0 && (

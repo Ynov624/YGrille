@@ -7,6 +7,7 @@ import {
   updateStudent,
   deleteStudent,
   importStudentsCsv,
+  importStudentsFromPromo,
 } from "../../../api/students.js";
 import {
   fetchGroups,
@@ -14,30 +15,15 @@ import {
   deleteGroup,
   setStudentGroup,
 } from "../../../api/groups.js";
+import { fetchPromos } from "../../../api/promos.js";
 import Loading from "../../../components/Loading.jsx";
-
-/**
- * Lit un fichier CSV en détectant son encodage : Excel FR enregistre par défaut un CSV en
- * Windows-1252 (ANSI), pas en UTF-8 — décoder en UTF-8 systématiquement (`file.text()`)
- * corrompt alors les caractères accentués ("Prénom" → colonne introuvable). On repère un
- * BOM UTF-8 explicite, sinon on tente un décodage UTF-8 strict, et on retombe sur
- * Windows-1252 s'il échoue.
- */
-async function readCsvFile(file) {
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
-    return new TextDecoder("utf-8").decode(bytes.subarray(3));
-  }
-  try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-  } catch {
-    return new TextDecoder("windows-1252").decode(bytes);
-  }
-}
+import { useDocumentTitle } from "../../../hooks/useDocumentTitle.js";
+import { readCsvFile } from "../../../utils/readCsvFile.js";
 
 export default function GridStudentsPage() {
   const { id } = useParams();
   const [grid, setGrid] = useState(null);
+  useDocumentTitle(grid ? `Élèves - ${grid.name}` : "Élèves");
   const [students, setStudents] = useState(null);
   const [groups, setGroups] = useState(null);
   const [error, setError] = useState(null);
@@ -55,10 +41,15 @@ export default function GridStudentsPage() {
   const [groupName, setGroupName] = useState("");
   const [addingGroup, setAddingGroup] = useState(false);
 
+  const [promos, setPromos] = useState([]);
+  const [selectedPromoId, setSelectedPromoId] = useState("");
+  const [importingPromo, setImportingPromo] = useState(false);
+
   useEffect(() => {
     fetchGrid(id).then(setGrid).catch((e) => setError(e.message));
     fetchStudents(id).then(setStudents).catch((e) => setError(e.message));
     fetchGroups(id).then(setGroups).catch((e) => setError(e.message));
+    fetchPromos().then(setPromos).catch(() => {});
   }, [id]);
 
   const showError = (e) => setError(e.details?.length ? e.details.join(" ") : e.message);
@@ -127,6 +118,20 @@ export default function GridStudentsPage() {
     }
   };
 
+  const importFromPromo = async () => {
+    if (!selectedPromoId) return;
+    setImportingPromo(true);
+    setError(null);
+    try {
+      const list = await importStudentsFromPromo(id, selectedPromoId);
+      setStudents(list);
+    } catch (err) {
+      showError(err);
+    } finally {
+      setImportingPromo(false);
+    }
+  };
+
   const addGroup = async (e) => {
     e.preventDefault();
     setAddingGroup(true);
@@ -174,7 +179,7 @@ export default function GridStudentsPage() {
       </div>
 
       {error && (
-        <div className="error-box">
+        <div className="error-box" role="alert">
           <p>{error}</p>
         </div>
       )}
@@ -213,6 +218,35 @@ export default function GridStudentsPage() {
           onChange={onImportFile}
           disabled={importing}
         />
+      </section>
+
+      <section className="panel">
+        <h2>Importer une promo</h2>
+        {promos.length === 0 ? (
+          <p className="hint">Aucune promo disponible. Un administrateur peut en ajouter depuis le panneau admin.</p>
+        ) : (
+          <>
+            <p className="hint">Ajoute les élèves de la promo sélectionnée à la liste existante.</p>
+            <div className="promo-import-row">
+              <select value={selectedPromoId} onChange={(e) => setSelectedPromoId(e.target.value)}>
+                <option value="">Sélectionner une promo…</option>
+                {promos.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.students_count} élève{p.students_count > 1 ? "s" : ""})
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="btn ghost small"
+                onClick={importFromPromo}
+                disabled={!selectedPromoId || importingPromo}
+              >
+                {importingPromo ? "Import…" : "Importer les étudiants"}
+              </button>
+            </div>
+          </>
+        )}
       </section>
 
       <section className="panel">

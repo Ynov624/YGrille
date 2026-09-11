@@ -26,7 +26,7 @@ export async function getGrid(id, userId) {
     [id]
   );
   const [categories] = await pool.query(
-    "SELECT id, position, name FROM categories WHERE grid_id = ? ORDER BY position",
+    "SELECT id, position, name, deliverable FROM categories WHERE grid_id = ? ORDER BY position",
     [id]
   );
   const [criteria] = await pool.query(
@@ -51,8 +51,8 @@ async function insertGridContents(conn, gridId, payload) {
   for (const [i, cat] of payload.categories.entries()) {
     const categoryId = randomUUID();
     await conn.query(
-      "INSERT INTO categories (id, grid_id, position, name) VALUES (?, ?, ?, ?)",
-      [categoryId, gridId, i, cat.name]
+      "INSERT INTO categories (id, grid_id, position, name, deliverable) VALUES (?, ?, ?, ?, ?)",
+      [categoryId, gridId, i, cat.name, cat.deliverable]
     );
     categoryIds.push(categoryId);
   }
@@ -112,7 +112,7 @@ export async function duplicateGrid(id, userId) {
   return createGrid(userId, {
     name: `${grid.name} (copie)`,
     levels: grid.levels.map((l) => ({ label: l.label, pct: l.pct })),
-    categories: grid.categories.map((cat) => ({ name: cat.name })),
+    categories: grid.categories.map((cat) => ({ name: cat.name, deliverable: cat.deliverable })),
     criteria: grid.criteria.map((c) => ({
       name: c.name,
       weight: c.weight,

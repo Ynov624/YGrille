@@ -63,10 +63,11 @@ CREATE TABLE IF NOT EXISTS levels (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS categories (
-  id       VARCHAR(36) PRIMARY KEY,
-  grid_id  VARCHAR(36) NOT NULL,
-  position INTEGER NOT NULL,
-  name     TEXT NOT NULL,
+  id          VARCHAR(36) PRIMARY KEY,
+  grid_id     VARCHAR(36) NOT NULL,
+  position    INTEGER NOT NULL,
+  name        TEXT NOT NULL,
+  deliverable TEXT NOT NULL DEFAULT (''),
   UNIQUE (grid_id, position),
   FOREIGN KEY (grid_id) REFERENCES grids(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -99,6 +100,23 @@ CREATE TABLE IF NOT EXISTS students (
   comment    TEXT NOT NULL DEFAULT (''),
   FOREIGN KEY (grid_id) REFERENCES grids(id) ON DELETE CASCADE,
   FOREIGN KEY (group_id) REFERENCES `groups`(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Promotions gérées depuis le panneau admin (mot de passe partagé, cf.
+-- middleware/requireAdmin.js) : un référentiel d'élèves commun à tous les
+-- comptes, importable en un clic dans n'importe quelle grille.
+CREATE TABLE IF NOT EXISTS promos (
+  id         VARCHAR(36) PRIMARY KEY,
+  name       TEXT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS promo_students (
+  id         VARCHAR(36) PRIMARY KEY,
+  promo_id   VARCHAR(36) NOT NULL,
+  last_name  TEXT NOT NULL,
+  first_name TEXT NOT NULL DEFAULT (''),
+  FOREIGN KEY (promo_id) REFERENCES promos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS marks (

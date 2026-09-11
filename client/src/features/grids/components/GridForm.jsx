@@ -4,9 +4,11 @@ import LevelsEditor from "./LevelsEditor.jsx";
 import CategoryCriteriaEditor from "./CategoryCriteriaEditor.jsx";
 import GridPreview from "./GridPreview.jsx";
 import { exportBlankGridPdf } from "../pdf.js";
+import { useDocumentTitle } from "../../../hooks/useDocumentTitle.js";
 
 /** Formulaire de grille (nom, niveaux, catégories, critères), utilisé pour la création et l'édition. */
 export default function GridForm({ title, subtitle, submitLabel, initial, saving, errors, onSubmit }) {
+  useDocumentTitle(title);
   const [name, setName] = useState(initial.name);
   const [levels, setLevels] = useState(initial.levels);
   const [categories, setCategories] = useState(initial.categories);
@@ -25,7 +27,7 @@ export default function GridForm({ title, subtitle, submitLabel, initial, saving
     onSubmit({
       name,
       levels: levels.map((l) => ({ label: l.label, pct: Number(l.pct) })),
-      categories: categories.map((c) => ({ name: c.name })),
+      categories: categories.map((c) => ({ name: c.name, deliverable: c.deliverable })),
       criteria: criteria.map((c) => ({
         name: c.name,
         weight: Number(c.weight),
@@ -83,7 +85,7 @@ export default function GridForm({ title, subtitle, submitLabel, initial, saving
         </section>
 
         {errors && (
-          <div className="error-box">
+          <div className="error-box" role="alert">
             <ul>{errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
           </div>
         )}

@@ -6,6 +6,8 @@ import gridsRouter from "./routes/grids.routes.js";
 import studentsRouter from "./routes/students.routes.js";
 import marksRouter from "./routes/marks.routes.js";
 import groupsRouter from "./routes/groups.routes.js";
+import promosRouter from "./routes/promos.routes.js";
+import adminRouter from "./routes/admin.routes.js";
 import { AppError } from "./utils/errors.js";
 
 export function createApp() {
@@ -28,6 +30,8 @@ export function createApp() {
   app.use("/api/grids/:gridId/marks", marksRouter);
   app.use("/api/grids/:gridId/groups", groupsRouter);
   app.use("/api/grids", gridsRouter);
+  app.use("/api/promos", promosRouter);
+  app.use("/api/admin", adminRouter);
 
   // 404 API
   app.use("/api", (_req, res) => {

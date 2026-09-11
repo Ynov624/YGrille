@@ -30,8 +30,8 @@ function levelLabelFor(grid, position) {
   return level ? level.label : "Non évalué";
 }
 
-function fileNameFor(student) {
-  return sanitizeFileName(`${student.last_name}_${student.first_name}`) + ".pdf";
+function fileNameFor(grid, student) {
+  return sanitizeFileName(`${student.last_name}_${student.first_name}_${grid.name}`) + ".pdf";
 }
 
 /**
@@ -97,6 +97,14 @@ export function buildStudentPdf(grid, student, getMark) {
     doc.setTextColor(...ACCENT_RGB);
     doc.text(`${formatPoints(catGrade?.earnedPoints)} / ${catGrade?.totalWeight ?? 0}`, PAGE_WIDTH - MARGIN_X, y, { align: "right" });
     y += 3;
+    if (cat.deliverable) {
+      y += 4.5;
+      doc.setFontSize(9.5);
+      doc.setFont(undefined, "normal");
+      doc.setTextColor(...MUTED_RGB);
+      doc.text(`Livrable : ${cat.deliverable}`, MARGIN_X + 4, y);
+      y += 1.5;
+    }
 
     const rows = catCriteria.map((c) => {
       const entry = getMark(c.id);
@@ -156,7 +164,7 @@ export function buildStudentPdf(grid, student, getMark) {
 
 /** Télécharge le PDF d'un seul élève. */
 export function exportStudentPdf(grid, student, getMark) {
-  buildStudentPdf(grid, student, getMark).save(fileNameFor(student));
+  buildStudentPdf(grid, student, getMark).save(fileNameFor(grid, student));
 }
 
 /**
@@ -214,6 +222,12 @@ export function buildBlankGridPdf(grid) {
     doc.setFont(undefined, "normal");
     doc.text(`${totalWeight} pt${totalWeight > 1 ? "s" : ""} au total`, PAGE_WIDTH - MARGIN_X, y, { align: "right" });
     y += 3;
+    if (cat.deliverable) {
+      y += 4.5;
+      doc.setFontSize(9.5);
+      doc.text(`Livrable : ${cat.deliverable}`, MARGIN_X + 4, y);
+      y += 1.5;
+    }
 
     autoTable(doc, {
       startY: y,
@@ -248,7 +262,7 @@ export async function exportAllStudentsZip(grid, students, getMarkFor) {
   const zip = new JSZip();
   students.forEach((student) => {
     const doc = buildStudentPdf(grid, student, (criterionId) => getMarkFor(student.id, criterionId));
-    zip.file(fileNameFor(student), doc.output("blob"));
+    zip.file(fileNameFor(grid, student), doc.output("blob"));
   });
   const content = await zip.generateAsync({ type: "blob" });
   const zipName = sanitizeFileName(grid.name) + "_evaluations.zip";

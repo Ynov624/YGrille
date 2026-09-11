@@ -29,17 +29,19 @@ services:
     build: ./server
     restart: unless-stopped
     environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
+      # Pointe vers la base hébergée (Clever Cloud), la même que l'app Electron
+      # (voir electron/config.js) — pas le conteneur `mysql` local ci-dessus, qui
+      # reste disponible pour inspection via phpMyAdmin mais n'est plus utilisé par
+      # `back`. Variables distinctes de DB_USER/DB_PASSWORD (qui configurent le
+      # conteneur `mysql` local) pour ne pas les confondre.
+      DB_HOST: ${CLEVER_DB_HOST}
+      DB_PORT: ${CLEVER_DB_PORT}
+      DB_USER: ${CLEVER_DB_USER}
+      DB_PASSWORD: ${CLEVER_DB_PASSWORD}
+      DB_NAME: ${CLEVER_DB_NAME}
       JWT_SECRET: ${JWT_SECRET}
       RESEND_API_KEY: ${RESEND_API_KEY}
       MAIL_FROM: ${MAIL_FROM}
-    depends_on:
-      mysql:
-        condition: service_healthy
 
   front:
     build: ./client
