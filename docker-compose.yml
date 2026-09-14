@@ -1,45 +1,14 @@
 services:
-  mysql:
-    image: mysql:8
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_ROOT_PASSWORD}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    restart: unless-stopped
-    environment:
-      PMA_HOST: mysql
-    depends_on:
-      - mysql
-    ports:
-      - "8080:80"
-
   back:
     build: ./server
     restart: unless-stopped
     environment:
-      # Pointe vers la base hébergée (Clever Cloud), la même que l'app Electron
-      # (voir electron/config.js) — pas le conteneur `mysql` local ci-dessus, qui
-      # reste disponible pour inspection via phpMyAdmin mais n'est plus utilisé par
-      # `back`. Variables distinctes de DB_USER/DB_PASSWORD (qui configurent le
-      # conteneur `mysql` local) pour ne pas les confondre.
-      DB_HOST: ${CLEVER_DB_HOST}
-      DB_PORT: ${CLEVER_DB_PORT}
-      DB_USER: ${CLEVER_DB_USER}
-      DB_PASSWORD: ${CLEVER_DB_PASSWORD}
-      DB_NAME: ${CLEVER_DB_NAME}
+      # Base Turso (la même que la version en ligne) ; sans TURSO_DATABASE_URL le
+      # conteneur utiliserait un fichier SQLite interne, perdu à chaque rebuild.
+      TURSO_DATABASE_URL: ${TURSO_DATABASE_URL}
+      TURSO_AUTH_TOKEN: ${TURSO_AUTH_TOKEN}
       JWT_SECRET: ${JWT_SECRET}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       RESEND_API_KEY: ${RESEND_API_KEY}
       MAIL_FROM: ${MAIL_FROM}
 
@@ -50,6 +19,3 @@ services:
       - "80:80"
     depends_on:
       - back
-
-volumes:
-  mysql_data:
