@@ -1,13 +1,12 @@
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
-import { pool } from "../db/connection.js";
+import { get, run } from "../db/connection.js";
 import { badRequest } from "../utils/errors.js";
 
 const SALT_ROUNDS = 10;
 
 export async function findUserByEmail(email) {
-  const [[user]] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
-  return user;
+  return get("SELECT * FROM users WHERE email = ?", [email]);
 }
 
 export function toPublicUser(user) {
@@ -20,7 +19,7 @@ export async function registerUser({ email, password, name }) {
   }
   const id = randomUUID();
   const passwordHash = bcrypt.hashSync(password, SALT_ROUNDS);
-  await pool.query(
+  await run(
     "INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)",
     [id, email, passwordHash, name]
   );
@@ -39,6 +38,6 @@ export async function verifyCredentials(email, password) {
       "EMAIL_NOT_VERIFIED"
     );
   }
-  await pool.query("UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?", [user.id]);
+  await run("UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?", [user.id]);
   return toPublicUser(user);
 }

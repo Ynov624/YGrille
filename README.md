@@ -5,19 +5,21 @@ Application d'évaluation par compétences : grilles de critères pondérés,
 
 ## Stack
 
-| Couche   | Techno                                   |
-|----------|------------------------------------------|
-| Client   | React 18 + Vite + React Router           |
-| Serveur  | Node.js + Express                        |
-| Base     | MySQL (`mysql2`)                         |
-| Auth     | JWT (Bearer token, `jsonwebtoken`)       |
-| Infra    | Docker Compose (front, back, mysql, phpMyAdmin) |
+| Couche      | Techno                                                          |
+|-------------|-----------------------------------------------------------------|
+| Client      | React 18 + Vite + React Router                                  |
+| Serveur     | Node.js + Express                                               |
+| Base        | SQLite hébergé sur Turso (`@libsql/client`)                     |
+| Auth        | JWT (Bearer token, `jsonwebtoken`)                              |
+| Hébergement | Vercel : client en statique, API Express en fonction serverless |
 
 ## Arborescence
 
 ```
-grilles-notation/
-├── docker-compose.yml         # front + back + mysql + phpMyAdmin
+YGrille/
+├── vercel.json                # build du client, /api/* → fonction, région dub1 (Dublin)
+├── api/index.mjs              # point d'entrée Vercel : exporte l'app Express
+├── docker-compose.yml         # alternative auto-hébergée : front (nginx) + back
 ├── package.json               # workspaces npm + script `npm run dev`
 ├── client/                    # Front (Vite + React)
 │   ├── Dockerfile             # build Vite → nginx (proxy /api → back)
@@ -27,54 +29,98 @@ grilles-notation/
 │       ├── main.jsx           # point d'entrée
 │       ├── App.jsx            # routing
 │       ├── auth/              # AuthContext (token JWT) + écran de connexion
-│       ├── api/                # client HTTP (fetch) par ressource
-│       ├── styles/             # CSS global
+│       ├── api/               # client HTTP (fetch) par ressource
+│       ├── styles/            # CSS global
 │       └── features/
-│           └── grids/          # module « grilles »
-│               ├── pages/        # écrans (liste, création…)
-│               ├── components/   # éditeurs de critères / niveaux
-│               └── defaults.js   # niveaux d'acquisition par défaut
+│           ├── admin/         # panneau admin (promos)
+│           └── grids/         # module « grilles »
+│               ├── pages/       # écrans (liste, création…)
+│               ├── components/  # éditeurs de critères / niveaux
+│               └── defaults.js  # niveaux d'acquisition par défaut
 └── server/                    # API (Express)
     ├── Dockerfile
     └── src/
-        ├── index.js          # démarrage HTTP
-        ├── app.js            # instance Express + middlewares + routes
+        ├── index.js           # démarrage HTTP (dev, Docker, Electron)
+        ├── app.js             # instance Express + middlewares + routes
         ├── auth/
         │   ├── jwt.js         # signature/vérification des tokens
         │   └── authValidate.js
         ├── db/
-        │   ├── connection.js # pool MySQL + exécution du schéma
-        │   └── schema.sql    # schéma complet (tables futures incluses)
-        ├── routes/           # déclaration des endpoints
-        ├── controllers/      # HTTP ⇄ services (parsing, statuts, erreurs)
-        ├── services/         # logique métier + accès base
-        └── utils/            # validation, erreurs applicatives
+        │   ├── connection.js  # client libSQL (Turso ou fichier local) + all/get/run/batch
+        │   ├── init.js        # `npm run db:init -w server` : applique le schéma
+        │   └── schema.sql     # schéma complet
+        ├── routes/            # déclaration des endpoints
+        ├── controllers/       # HTTP ⇄ services (parsing, statuts, erreurs)
+        ├── services/          # logique métier + accès base
+        └── utils/             # validation, erreurs applicatives
 ```
 
 ## Modèle de données
 
 ```
-users      (id, email, password_hash, name, created_at, last_login_at)
-grids      (id, user_id, name, created_at)          
-levels     (id, grid_id, position 0..4, label, pct)     
-categories (id, grid_id, position, name)
-criteria   (id, grid_id, category_id, position, name, weight)
-groups     (id, grid_id, name)
-students   (id, grid_id, group_id, last_name, first_name, comment)
-marks      (student_id, criterion_id, level_position)
+users                    (id, email, password_hash, name, email_verified_at, created_at, last_login_at)
+email_verification_codes (user_id, code_hash, expires_at, attempts, created_at)
+grids                    (id, user_id, name, created_at)
+levels                   (id, grid_id, position 0..4, label, pct)
+categories               (id, grid_id, position, name, deliverable)
+criteria                 (id, grid_id, category_id, position, name, weight)
+groups                   (id, grid_id, name)
+students                 (id, grid_id, group_id, last_name, first_name, comment)
+marks                    (student_id, criterion_id, level_position, comment)
+promos                   (id, name, created_at)
+promo_students           (id, promo_id, last_name, first_name)
 ```
 
 ## Démarrer
 
-### Avec Docker 
+### En local
 
 ```bash
-cp .env.example .env   # renseigner les mots de passe MySQL + JWT_SECRET
+npm install
+cp server/.env.example server/.env   # renseigner au moins JWT_SECRET et ADMIN_PASSWORD
+npm run dev
+```
+
+Front sur http://localhost:5173, API sur http://localhost:3001. Sans
+`TURSO_DATABASE_URL`, la base est un fichier SQLite local (`server/data/ygrille.db`),
+créé et initialisé au démarrage. Sans `RESEND_API_KEY`, le code de vérification
+envoyé à l'inscription s'affiche dans la console du serveur.
+
+### Base Turso (production)
+
+Base `ygrille` (organisation Turso `ynov624`, région `aws-eu-west-1`). Le schéma
+s'applique à la main, une fois à la création puis après chaque modification de
+`schema.sql` (les fonctions Vercel ne le rejouent pas à chaque démarrage) :
+
+```bash
+TURSO_DATABASE_URL=$(turso db show ygrille --url) \
+TURSO_AUTH_TOKEN=$(turso db tokens create ygrille) \
+npm run db:init -w server
+```
+
+### Vercel
+
+Le projet Vercel pointe sur la racine du dépôt ; `vercel.json` définit l'installation,
+le build du client, la redirection de `/api/*` vers la fonction Express et la région.
+Variables d'environnement à définir sur le projet :
+
+| Variable             | Rôle                                                        |
+|----------------------|-------------------------------------------------------------|
+| `TURSO_DATABASE_URL` | `libsql://ygrille-ynov624.aws-eu-west-1.turso.io`           |
+| `TURSO_AUTH_TOKEN`   | `turso db tokens create ygrille`                            |
+| `JWT_SECRET`         | secret aléatoire (changer = déconnecter tout le monde)      |
+| `ADMIN_PASSWORD`     | mot de passe du panneau admin (vide = panneau fermé)        |
+| `RESEND_API_KEY`     | envoi du code de vérification à l'inscription               |
+| `MAIL_FROM`          | expéditeur, sur un domaine vérifié chez Resend              |
+
+### Avec Docker
+
+```bash
+cp .env.example .env   # variables Turso, JWT_SECRET, ADMIN_PASSWORD, Resend
 docker compose up --build
 ```
 
-Front sur http://localhost, phpMyAdmin sur http://localhost:8080. Le schéma
-MySQL (`server/src/db/schema.sql`) est appliqué automatiquement au démarrage du conteneur `back`.
+Front sur http://localhost.
 
 ## Feuille de route
 
@@ -98,4 +144,5 @@ MySQL (`server/src/db/schema.sql`) est appliqué automatiquement au démarrage d
 - [x] Mettre le password norme CNIL
 - [x] Verification mail lors de l'inscription (envoie de mail + verification avec code)
 - [x] Le focus des champs ne marche plus a certain moment on ne sait pas pourquoi.
-- [ ] Mettre le tout en application éléctron fonctionnel avec un .exe qui installe l'appli sur la machine. Pas de demande admin pour installer ni de mode developpeur c'est pour des personnes qui ne peuvent pas changer les droits ni les options.
+- [x] Migration MySQL (Clever Cloud) → Turso et déploiement web sur Vercel, accessible depuis YOutils
+- [ ] Mettre le tout en application éléctron fonctionnel avec un .exe qui installe l'appli sur la machine. Pas de demande admin pour installer ni de mode developpeur c'est pour des personnes qui ne peuvent pas changer les droits ni les options. (rendu en grande partie inutile par la version web)

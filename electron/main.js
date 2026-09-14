@@ -22,7 +22,7 @@ function ensureSecret(userDataDir, filename) {
  * Le code serveur est en ESM (`import`/`export`), donc chargé via `import()` dynamique
  * depuis ce process principal en CommonJS.
  *
- * La base de données est un MySQL hébergé partagé par toutes les installations
+ * La base de données est la base Turso partagée par toutes les installations
  * desktop (voir electron/config.js) — chaque install ne fait tourner que le
  * serveur Express en local, les données vivent côté hébergeur.
  */
@@ -31,11 +31,9 @@ async function startServer() {
   process.env.JWT_SECRET = ensureSecret(userDataDir, "jwt-secret.txt");
   process.env.CLIENT_DIST = path.join(__dirname, "..", "client", "dist");
 
-  process.env.DB_HOST = config.DB_HOST;
-  process.env.DB_PORT = config.DB_PORT;
-  process.env.DB_USER = config.DB_USER;
-  process.env.DB_PASSWORD = config.DB_PASSWORD;
-  process.env.DB_NAME = config.DB_NAME;
+  process.env.TURSO_DATABASE_URL = config.TURSO_DATABASE_URL;
+  process.env.TURSO_AUTH_TOKEN = config.TURSO_AUTH_TOKEN;
+  process.env.ADMIN_PASSWORD = config.ADMIN_PASSWORD;
   process.env.RESEND_API_KEY = config.RESEND_API_KEY;
   process.env.MAIL_FROM = config.MAIL_FROM;
 

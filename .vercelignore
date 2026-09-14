@@ -1,0 +1,10 @@
+# Fichiers jamais envoyés à Vercel (secrets locaux, artefacts, app desktop).
+node_modules
+release
+client/dist
+.env
+.env.local
+.env.*.local
+server/.env
+server/data
+electron

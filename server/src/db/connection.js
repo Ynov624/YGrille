@@ -1,64 +1,74 @@
-import mysql from "mysql2/promise";
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-export const pool = mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  port: Number(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "grilles",
-  waitForConnections: true,
-  connectionLimit: 10,
-  multipleStatements: true,
-  // Le MySQL hébergé (Clever Cloud) sert un certificat auto-généré, pas signé par une
-  // autorité publique : `rejectUnauthorized: true` (validation via le magasin de CA du
-  // système) échoue avec SELF_SIGNED_CERT_IN_CHAIN. On chiffre donc la connexion sans
-  // vérifier l'identité du serveur (protège de l'écoute passive sur le réseau, pas d'un
-  // MITM actif) plutôt que d'épingler ce certificat précis, qui casserait toutes les
-  // installs si Clever Cloud le régénère (migration/maintenance de leur côté).
-  ssl: { rejectUnauthorized: false },
-  // Sans CLIENT_FOUND_ROWS, `affectedRows` sur un UPDATE ne compte que les lignes
-  // dont une valeur a réellement changé. Le code des services teste `affectedRows`
-  // pour détecter une ressource introuvable (comme `changes` en SQLite, qui compte
-  // les lignes matchées) : un UPDATE qui réécrit les mêmes valeurs déclencherait
-  // sinon un faux 404.
-  flags: ["FOUND_ROWS"],
-});
+// Sans TURSO_DATABASE_URL (dev local), la base est un simple fichier SQLite dans
+// server/data/ (non versionné). En production, c'est la base Turso (libsql://…).
+const LOCAL_DB_PATH = join(here, "..", "..", "data", "ygrille.db");
 
-async function waitForDatabase(retries = 20, delayMs = 1500) {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const conn = await pool.getConnection();
-      conn.release();
-      return;
-    } catch (err) {
-      if (attempt === retries) throw err;
-      console.log(`[db] connexion MySQL indisponible (essai ${attempt}/${retries}), nouvelle tentative dans ${delayMs}ms…`);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
-  }
+let clientPromise = null;
+
+/**
+ * Client libSQL créé à la première requête plutôt qu'à l'import : les variables
+ * d'environnement sont lues une fois dotenv chargé (ou renseignées par Electron), et le
+ * module reste importable sans top-level await.
+ *
+ * Pour Turso on prend le client « web » (HTTP via fetch, sans binaire natif), adapté aux
+ * fonctions serverless de Vercel ; le client Node complet n'est chargé que pour un
+ * fichier local.
+ */
+function getClient() {
+  clientPromise ??= createDbClient();
+  return clientPromise;
 }
 
-/** Attend que MySQL soit prêt puis applique le schéma (idempotent : CREATE TABLE IF NOT EXISTS). */
+async function createDbClient() {
+  const url = process.env.TURSO_DATABASE_URL;
+  if (url) {
+    const { createClient } = await import("@libsql/client/web");
+    return createClient({ url, authToken: process.env.TURSO_AUTH_TOKEN });
+  }
+  mkdirSync(dirname(LOCAL_DB_PATH), { recursive: true });
+  const { createClient } = await import("@libsql/client");
+  return createClient({ url: `file:${LOCAL_DB_PATH}` });
+}
+
+/** Toutes les lignes d'une requête, en objets simples `{ colonne: valeur }`. */
+export async function all(sql, args = []) {
+  const { rows } = await (await getClient()).execute({ sql, args });
+  return rows.map((row) => ({ ...row }));
+}
+
+/** Première ligne d'une requête, ou `undefined`. */
+export async function get(sql, args = []) {
+  const [row] = await all(sql, args);
+  return row;
+}
+
+/**
+ * Écriture simple ; retourne le nombre de lignes touchées. Les services s'en servent pour
+ * détecter une ressource introuvable : SQLite compte les lignes trouvées, même quand un
+ * UPDATE réécrit des valeurs identiques (pas de faux 404).
+ */
+export async function run(sql, args = []) {
+  const { rowsAffected } = await (await getClient()).execute({ sql, args });
+  return rowsAffected;
+}
+
+/**
+ * Exécute une liste d'écritures `{ sql, args }` dans une seule transaction (tout ou rien)
+ * et en un seul aller-retour réseau. Remplace les transactions interactives de MySQL, trop
+ * bavardes en HTTP : les UUID étant générés côté serveur, chaque lot est connu d'avance.
+ */
+export async function batch(statements) {
+  if (statements.length === 0) return;
+  await (await getClient()).batch(statements, "write");
+}
+
+/** Applique le schéma (idempotent : CREATE TABLE IF NOT EXISTS). */
 export async function initDatabase() {
-  await waitForDatabase();
   const schema = readFileSync(join(here, "schema.sql"), "utf-8");
-  await pool.query(schema);
-  await addColumnIfMissing("users", "email_verified_at", "DATETIME");
-  await addColumnIfMissing("categories", "deliverable", "TEXT NOT NULL DEFAULT ('')");
-}
-
-// MySQL (contrairement à MariaDB) n'a pas de `ADD COLUMN IF NOT EXISTS` :
-// on tente l'ALTER et on ignore l'erreur si la colonne existe déjà
-// (ER_DUP_FIELDNAME, ex. sur une base déployée avant cette migration).
-async function addColumnIfMissing(table, column, definition) {
-  try {
-    await pool.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
-  } catch (err) {
-    if (err.code !== "ER_DUP_FIELDNAME") throw err;
-  }
+  await (await getClient()).executeMultiple(schema);
 }
