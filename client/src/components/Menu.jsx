@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Icon from "./Icon.jsx";
 
 /**
  * Menu déroulant (bouton « ⋯ ») : regroupe des actions secondaires pour éviter d'aligner
@@ -47,13 +48,13 @@ export default function Menu({ label = "Actions", children }) {
       <button
         ref={triggerRef}
         type="button"
-        className="btn ghost small menu-trigger"
+        className="btn ghost small icon-only menu-trigger"
         aria-haspopup="true"
         aria-expanded={open}
         aria-label={label}
         onClick={() => setOpen((o) => !o)}
       >
-        ...
+        <Icon name="more" size={18} />
       </button>
       {open && pos && createPortal(
         <div

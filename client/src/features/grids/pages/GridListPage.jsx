@@ -4,6 +4,9 @@ import { fetchGrids, fetchGrid, createGrid, deleteGrid, duplicateGrid } from "..
 import { exportGridJson, parseGridImportFile } from "../jsonTransfer.js";
 import Loading from "../../../components/Loading.jsx";
 import Menu from "../../../components/Menu.jsx";
+import Icon from "../../../components/Icon.jsx";
+import PageHeader from "../../../components/PageHeader.jsx";
+import EmptyState from "../../../components/EmptyState.jsx";
 import { useDocumentTitle } from "../../../hooks/useDocumentTitle.js";
 
 export default function GridListPage() {
@@ -82,86 +85,117 @@ export default function GridListPage() {
 
   return (
     <main className="page">
-      <div className="page-head">
-        <div>
-          <h1>Mes grilles</h1>
-          <p className="sub">Créez une grille de compétences.</p>
-        </div>
-        <div className="page-head-actions">
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={() => fileInput.current?.click()}
-            disabled={importing}
-          >
-            {importing ? "Import…" : "Importer"}
-          </button>
-          <input
-            ref={fileInput}
-            type="file"
-            accept=".json,application/json"
-            onChange={onImportFile}
-            disabled={importing}
-            style={{ display: "none" }}
-          />
-          <Link to="/grilles/nouvelle" className="btn primary">+ Nouvelle grille</Link>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Espace" }, { label: "Mes grilles" }]}
+        title="Mes grilles"
+        subtitle="Créez une grille de compétences."
+        actions={
+          <>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => fileInput.current?.click()}
+              disabled={importing}
+            >
+              <Icon name="upload" />
+              {importing ? "Import…" : "Importer"}
+            </button>
+            <input
+              ref={fileInput}
+              type="file"
+              accept=".json,application/json"
+              onChange={onImportFile}
+              disabled={importing}
+              style={{ display: "none" }}
+            />
+            <Link to="/grilles/nouvelle" className="btn primary">
+              <Icon name="plus" />
+              Nouvelle grille
+            </Link>
+          </>
+        }
+      />
 
-      {error && <p className="error-box" role="alert">{error}</p>}
+      {error && <p className="error-box" role="alert"><Icon name="alert" />{error}</p>}
       {grids === null && !error && <Loading />}
 
       {grids?.length === 0 && (
-        <div className="empty">
-          <h2>Aucune grille pour l'instant</h2>
-          <p className="muted">Commencez par créer votre première grille de notation.</p>
-          <Link to="/grilles/nouvelle" className="btn primary">Créer une grille</Link>
-        </div>
+        <EmptyState
+          title="Aucune grille pour l'instant"
+          action={<Link to="/grilles/nouvelle" className="btn primary"><Icon name="plus" />Créer une grille</Link>}
+        >
+          Commencez par créer votre première grille de notation.
+        </EmptyState>
       )}
 
       {grids?.length > 0 && (
-        <ul className="grid-list">
-          {grids.map((g) => (
-            <li key={g.id} className="card">
-              <div className="card-info">
-                <strong>{g.name}</strong>
-                <span className="muted">
-                  {g.criteria_count} critère{g.criteria_count > 1 ? "s" : ""} ·{" "}
-                  {g.students_count} étudiant{g.students_count > 1 ? "s" : ""}
-                </span>
-              </div>
-              <div className="card-actions">
-                <Link to={`/grilles/${g.id}/evaluer`} className="btn primary small" aria-label={`Évaluer ${g.name}`}>
-                  Évaluer
-                </Link>
-                <Menu label={`Autres actions pour ${g.name}`}>
-                  <Link to={`/grilles/${g.id}/eleves`} className="menu-item">Élèves</Link>
-                  <Link to={`/grilles/${g.id}/modifier`} className="menu-item">Modifier</Link>
-                  <button
-                    type="button"
-                    className="menu-item"
-                    onClick={() => duplicate(g)}
-                    disabled={duplicatingId === g.id}
-                  >
-                    {duplicatingId === g.id ? "Duplication…" : "Dupliquer"}
-                  </button>
-                  <button
-                    type="button"
-                    className="menu-item"
-                    onClick={() => exportGrid(g)}
-                    disabled={exportingId === g.id}
-                  >
-                    {exportingId === g.id ? "Export…" : "Exporter"}
-                  </button>
-                  <div className="menu-separator" />
-                  <button type="button" className="menu-item danger" onClick={() => remove(g)}>
-                    Supprimer
-                  </button>
-                </Menu>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div className="table-wrap">
+          <table className="data-table grids-table">
+            <caption className="sr-only">Mes grilles ({grids.length})</caption>
+            <thead>
+              <tr>
+                <th scope="col">Grille</th>
+                <th scope="col" className="num">Critères</th>
+                <th scope="col" className="num">Étudiants</th>
+                <th scope="col"><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {grids.map((g) => (
+                <tr key={g.id}>
+                  <td>
+                    <div className="cell-title">
+                      <span className="row-mark" aria-hidden="true"><Icon name="grid" size={16} /></span>
+                      <div className="cell-stack">
+                        <strong>{g.name}</strong>
+                        <span className="muted cell-meta">
+                          {g.criteria_count} critère{g.criteria_count > 1 ? "s" : ""} ·{" "}
+                          {g.students_count} étudiant{g.students_count > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="num">{g.criteria_count}</td>
+                  <td className="num">{g.students_count}</td>
+                  <td className="actions">
+                    <div className="row-actions">
+                      <Link to={`/grilles/${g.id}/evaluer`} className="btn primary small" aria-label={`Évaluer ${g.name}`}>
+                        Évaluer
+                      </Link>
+                      <Menu label={`Autres actions pour ${g.name}`}>
+                        <Link to={`/grilles/${g.id}/eleves`} className="menu-item"><Icon name="users" />Élèves</Link>
+                        <Link to={`/grilles/${g.id}/modifier`} className="menu-item"><Icon name="pencil" />Modifier</Link>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          onClick={() => duplicate(g)}
+                          disabled={duplicatingId === g.id}
+                        >
+                          <Icon name="copy" />
+                          {duplicatingId === g.id ? "Duplication…" : "Dupliquer"}
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          onClick={() => exportGrid(g)}
+                          disabled={exportingId === g.id}
+                        >
+                          <Icon name="download" />
+                          {exportingId === g.id ? "Export…" : "Exporter"}
+                        </button>
+                        <div className="menu-separator" />
+                        <button type="button" className="menu-item danger" onClick={() => remove(g)}>
+                          <Icon name="trash" />
+                          Supprimer
+                        </button>
+                      </Menu>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </main>
   );
