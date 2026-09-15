@@ -9,7 +9,6 @@
 module.exports = {
   TURSO_DATABASE_URL: "libsql://ygrille-ynov624.aws-eu-west-1.turso.io",
   TURSO_AUTH_TOKEN: "",
-  ADMIN_PASSWORD: "",
   RESEND_API_KEY: "",
   MAIL_FROM: "Grilles de notation <onboarding@resend.dev>",
 };

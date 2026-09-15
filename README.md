@@ -58,7 +58,7 @@ YGrille/
 ## Modèle de données
 
 ```
-users                    (id, email, password_hash, name, email_verified_at, created_at, last_login_at)
+users                    (id, email, password_hash, name, role, email_verified_at, created_at, last_login_at)
 email_verification_codes (user_id, code_hash, expires_at, attempts, created_at)
 grids                    (id, user_id, name, created_at)
 levels                   (id, grid_id, position 0..4, label, pct)
@@ -77,7 +77,7 @@ promo_students           (id, promo_id, last_name, first_name)
 
 ```bash
 npm install
-cp server/.env.example server/.env   # renseigner au moins JWT_SECRET et ADMIN_PASSWORD
+cp server/.env.example server/.env   # renseigner au moins JWT_SECRET
 npm run dev
 ```
 
@@ -109,14 +109,26 @@ Variables d'environnement à définir sur le projet :
 | `TURSO_DATABASE_URL` | `libsql://ygrille-ynov624.aws-eu-west-1.turso.io`           |
 | `TURSO_AUTH_TOKEN`   | `turso db tokens create ygrille`                            |
 | `JWT_SECRET`         | secret aléatoire (changer = déconnecter tout le monde)      |
-| `ADMIN_PASSWORD`     | mot de passe du panneau admin (vide = panneau fermé)        |
 | `RESEND_API_KEY`     | envoi du code de vérification à l'inscription               |
 | `MAIL_FROM`          | expéditeur, sur un domaine vérifié chez Resend              |
+
+### Administrateurs
+
+Le panneau admin (promos, rôles) est réservé aux comptes de rôle `admin` ; le rôle est
+relu en base à chaque requête, donc un retrait de droits est immédiat. Les admins en
+nomment d'autres depuis l'onglet « Utilisateurs » du panneau. Le premier se nomme en
+ligne de commande, sur un compte déjà inscrit (même ciblage de base que `db:init`) :
+
+```bash
+TURSO_DATABASE_URL=$(turso db show ygrille --url) \
+TURSO_AUTH_TOKEN=$(turso db tokens create ygrille) \
+npm run user:role -w server -- prenom.nom@ynov.com admin
+```
 
 ### Avec Docker
 
 ```bash
-cp .env.example .env   # variables Turso, JWT_SECRET, ADMIN_PASSWORD, Resend
+cp .env.example .env   # variables Turso, JWT_SECRET, Resend
 docker compose up --build
 ```
 
@@ -145,4 +157,5 @@ Front sur http://localhost.
 - [x] Verification mail lors de l'inscription (envoie de mail + verification avec code)
 - [x] Le focus des champs ne marche plus a certain moment on ne sait pas pourquoi.
 - [x] Migration MySQL (Clever Cloud) → Turso et déploiement web sur Vercel, accessible depuis YOutils
+- [x] Rôles (utilisateur / admin) en base à la place du mot de passe admin partagé
 - [ ] Mettre le tout en application éléctron fonctionnel avec un .exe qui installe l'appli sur la machine. Pas de demande admin pour installer ni de mode developpeur c'est pour des personnes qui ne peuvent pas changer les droits ni les options. (rendu en grande partie inutile par la version web)

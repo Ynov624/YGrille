@@ -53,9 +53,12 @@ export const logout = asyncHandler(async (_req, res) => {
 });
 
 export const me = asyncHandler(async (req, res) => {
-  const user = verifyToken(getTokenFromHeader(req));
+  const payload = verifyToken(getTokenFromHeader(req));
+  // Relu en base plutôt que tiré du token : le rôle a pu changer depuis la connexion (il
+  // n'est d'ailleurs pas dans le token), et le compte avoir été supprimé.
+  const user = payload && (await users.findUserById(payload.id));
   if (!user) {
     return res.status(401).json({ error: "Non authentifié." });
   }
-  res.json(user);
+  res.json(users.toPublicUser(user));
 });

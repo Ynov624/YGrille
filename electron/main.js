@@ -33,7 +33,6 @@ async function startServer() {
 
   process.env.TURSO_DATABASE_URL = config.TURSO_DATABASE_URL;
   process.env.TURSO_AUTH_TOKEN = config.TURSO_AUTH_TOKEN;
-  process.env.ADMIN_PASSWORD = config.ADMIN_PASSWORD;
   process.env.RESEND_API_KEY = config.RESEND_API_KEY;
   process.env.MAIL_FROM = config.MAIL_FROM;
 

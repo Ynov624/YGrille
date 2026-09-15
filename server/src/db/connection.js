@@ -72,8 +72,21 @@ export async function batch(statements) {
   await (await getClient()).batch(statements, "write");
 }
 
-/** Applique le schéma (idempotent : CREATE TABLE IF NOT EXISTS). */
+/**
+ * Applique le schéma (idempotent : CREATE TABLE IF NOT EXISTS), puis ajoute aux tables déjà
+ * existantes les colonnes introduites depuis : CREATE TABLE IF NOT EXISTS ne touche pas une
+ * table présente, et SQLite n'a pas de « ADD COLUMN IF NOT EXISTS ».
+ */
 export async function initDatabase() {
   const schema = readFileSync(join(here, "schema.sql"), "utf-8");
   await (await getClient()).executeMultiple(schema);
+  // Même définition que dans schema.sql.
+  await addColumnIfMissing("users", "role", "TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin'))");
+}
+
+async function addColumnIfMissing(table, column, definition) {
+  const columns = await all(`PRAGMA table_info(${table})`);
+  if (!columns.some((c) => c.name === column)) {
+    await run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
 }

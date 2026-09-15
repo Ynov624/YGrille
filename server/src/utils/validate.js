@@ -94,6 +94,18 @@ export function validatePromoStudentPayload(body) {
   return { lastName, firstName };
 }
 
+/** Rôles possibles d'un compte (cf. contrainte CHECK de users.role dans schema.sql). */
+export const ROLES = ["user", "admin"];
+
+/** Valide le payload de changement de rôle d'un compte : { role }. */
+export function validateRolePayload(body) {
+  const role = body?.role;
+  if (!ROLES.includes(role)) {
+    throw badRequest("Rôle invalide.", ["Le rôle doit être « user » ou « admin »."]);
+  }
+  return { role };
+}
+
 /** Valide le payload de saisie d'une note de groupe : { levelPosition } (entier 0..4). */
 export function validateGroupMarkPayload(body) {
   const levelPosition = Number(body?.levelPosition);
