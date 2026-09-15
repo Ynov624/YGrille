@@ -448,28 +448,6 @@ tr:hover .row-mark, .select-row:hover .row-mark, .select-row.selected .row-mark 
   letter-spacing: .02em;
 }
 
-.lock-card {
-  max-width: 420px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 28px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xs);
-}
-.lock-card-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-sunken);
-  color: var(--ink);
-}
-
 @media (max-width: 640px) {
   .btn { height: 42px; }
   .btn.small { height: 36px; }

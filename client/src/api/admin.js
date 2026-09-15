@@ -1,7 +1,5 @@
 import { api } from "./client.js";
 
-export const adminLogin = (password) => api("/api/admin/login", { method: "POST", body: { password } });
-
 export const fetchPromosAdmin = () => api("/api/admin/promos");
 export const fetchPromoAdmin = (id) => api(`/api/admin/promos/${id}`);
 export const createPromoAdmin = (name) => api("/api/admin/promos", { method: "POST", body: { name } });
@@ -16,3 +14,6 @@ export const updatePromoStudent = (promoId, studentId, payload) =>
   api(`/api/admin/promos/${promoId}/students/${studentId}`, { method: "PATCH", body: payload });
 export const deletePromoStudent = (promoId, studentId) =>
   api(`/api/admin/promos/${promoId}/students/${studentId}`, { method: "DELETE" });
+
+export const fetchUsersAdmin = () => api("/api/admin/users");
+export const updateUserRoleAdmin = (id, role) => api(`/api/admin/users/${id}`, { method: "PATCH", body: { role } });

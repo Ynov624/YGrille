@@ -13,11 +13,15 @@
 
 -- Auth : email (obligatoirement @ynov.com, normalisé en minuscules, cf.
 -- auth/authValidate.js) + mot de passe (haché, jamais stocké en clair).
+-- `role` ouvre le panneau admin (cf. middleware/requireAdmin.js) : attribué depuis le
+-- panneau lui-même, ou en ligne de commande pour le premier admin (cf. db/setRole.js).
+-- Ajoutée après coup : les bases existantes la reçoivent via initDatabase (connection.js).
 CREATE TABLE IF NOT EXISTS users (
   id                 TEXT PRIMARY KEY,
   email              TEXT NOT NULL UNIQUE,
   password_hash      TEXT NOT NULL,
   name               TEXT NOT NULL DEFAULT '',
+  role               TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
   email_verified_at  DATETIME,
   created_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_login_at      DATETIME
@@ -94,7 +98,7 @@ CREATE TABLE IF NOT EXISTS students (
   FOREIGN KEY (group_id) REFERENCES `groups`(id) ON DELETE SET NULL
 );
 
--- Promotions gérées depuis le panneau admin (mot de passe partagé, cf.
+-- Promotions gérées depuis le panneau admin (comptes de rôle admin, cf.
 -- middleware/requireAdmin.js) : un référentiel d'élèves commun à tous les
 -- comptes, importable en un clic dans n'importe quelle grille.
 CREATE TABLE IF NOT EXISTS promos (

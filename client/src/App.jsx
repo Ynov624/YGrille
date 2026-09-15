@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Routes, Route, Link, NavLink, useLocation } from "react-router-dom";
+import { Routes, Route, Link, NavLink, Navigate, useLocation } from "react-router-dom";
 import GridListPage from "./features/grids/pages/GridListPage.jsx";
 import GridCreatePage from "./features/grids/pages/GridCreatePage.jsx";
 import GridEditPage from "./features/grids/pages/GridEditPage.jsx";
@@ -7,7 +7,6 @@ import GridStudentsPage from "./features/grids/pages/GridStudentsPage.jsx";
 import GridEvaluatePage from "./features/grids/pages/GridEvaluatePage.jsx";
 import AdminPage from "./features/admin/pages/AdminPage.jsx";
 import { AuthProvider, useAuth } from "./auth/AuthContext.jsx";
-import { AdminProvider } from "./auth/AdminContext.jsx";
 import LoginPage from "./auth/LoginPage.jsx";
 import Loading from "./components/Loading.jsx";
 import Logo from "./components/Logo.jsx";
@@ -44,6 +43,8 @@ function AppShell() {
   if (!user) return <LoginPage />;
 
   const gridsActive = location.pathname === "/" || location.pathname.startsWith("/grilles");
+  // Confort d'affichage seulement : l'API admin revérifie le rôle en base à chaque requête.
+  const isAdmin = user.role === "admin";
 
   return (
     <div className="app">
@@ -84,12 +85,14 @@ function AppShell() {
                 <span>Mes grilles</span>
               </NavLink>
             </li>
-            <li>
-              <NavLink to="/admin" className={({ isActive }) => `nav-item${isActive ? " active" : ""}`}>
-                <Icon name="shield" size={18} />
-                <span>Admin</span>
-              </NavLink>
-            </li>
+            {isAdmin && (
+              <li>
+                <NavLink to="/admin" className={({ isActive }) => `nav-item${isActive ? " active" : ""}`}>
+                  <Icon name="shield" size={18} />
+                  <span>Admin</span>
+                </NavLink>
+              </li>
+            )}
           </ul>
         </nav>
 
@@ -112,7 +115,7 @@ function AppShell() {
           <Route path="/grilles/:id/modifier" element={<GridEditPage />} />
           <Route path="/grilles/:id/eleves" element={<GridStudentsPage />} />
           <Route path="/grilles/:id/evaluer" element={<GridEvaluatePage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin" element={isAdmin ? <AdminPage /> : <Navigate to="/" replace />} />
         </Routes>
       </div>
     </div>
@@ -122,9 +125,7 @@ function AppShell() {
 export default function App() {
   return (
     <AuthProvider>
-      <AdminProvider>
-        <AppShell />
-      </AdminProvider>
+      <AppShell />
     </AuthProvider>
   );
 }

@@ -1,14 +1,8 @@
 let authToken = null;
-let adminToken = null;
 
 /** Token JWT à joindre aux requêtes (voir AuthContext.jsx pour la persistance). */
 export function setAuthToken(token) {
   authToken = token;
-}
-
-/** Token admin (panneau promos) à joindre en `X-Admin-Token` (voir AdminContext.jsx). */
-export function setAdminToken(token) {
-  adminToken = token;
 }
 
 /** Petit wrapper fetch : JSON, erreurs normalisées ({ error, details }). */
@@ -18,7 +12,6 @@ export async function api(path, options = {}) {
     headers: {
       "Content-Type": "application/json",
       ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-      ...(adminToken ? { "X-Admin-Token": adminToken } : {}),
       ...options.headers,
     },
     body: options.body ? JSON.stringify(options.body) : undefined,

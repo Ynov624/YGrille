@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAdmin } from "../../../auth/AdminContext.jsx";
+import { useAuth } from "../../../auth/AuthContext.jsx";
 import {
   fetchPromosAdmin,
   fetchPromoAdmin,
@@ -11,6 +11,8 @@ import {
   importPromoStudentsCsv,
   updatePromoStudent,
   deletePromoStudent,
+  fetchUsersAdmin,
+  updateUserRoleAdmin,
 } from "../../../api/admin.js";
 import { readCsvFile } from "../../../utils/readCsvFile.js";
 import Loading from "../../../components/Loading.jsx";
@@ -18,55 +20,7 @@ import Icon from "../../../components/Icon.jsx";
 import PageHeader from "../../../components/PageHeader.jsx";
 import { useDocumentTitle } from "../../../hooks/useDocumentTitle.js";
 
-/** Formulaire de mot de passe, affiché tant que le panneau admin n'est pas déverrouillé. */
-function AdminLockScreen() {
-  const { unlock } = useAdmin();
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
-  const [checking, setChecking] = useState(false);
-
-  const submit = async (e) => {
-    e.preventDefault();
-    setChecking(true);
-    setError(null);
-    try {
-      await unlock(password);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setChecking(false);
-    }
-  };
-
-  return (
-    <main className="page">
-      <PageHeader
-        breadcrumbs={[{ label: "Espace" }, { label: "Admin" }]}
-        title="Panneau admin"
-        subtitle="Gestion des promos, réservée aux administrateurs."
-        actions={<Link to="/" className="btn ghost"><Icon name="arrowLeft" />Retour</Link>}
-      />
-      <section className="lock-card">
-        <span className="lock-card-icon" aria-hidden="true"><Icon name="lock" size={20} /></span>
-        <form className="stack" onSubmit={submit}>
-          <label className="field">
-            <span>Mot de passe administrateur</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoFocus
-            />
-          </label>
-          {error && <p className="error-box" role="alert"><Icon name="alert" />{error}</p>}
-          <button type="submit" className="btn primary block" disabled={checking || !password}>
-            {checking ? "Vérification…" : "Déverrouiller"}
-          </button>
-        </form>
-      </section>
-    </main>
-  );
-}
+const ROLE_LABELS = { admin: "Administrateur", user: "Utilisateur" };
 
 /** Gestion des élèves d'une promo (ajout, import CSV, édition, suppression). */
 function PromoStudents({ promo, onChange }) {
@@ -223,8 +177,8 @@ function PromoStudents({ promo, onChange }) {
   );
 }
 
-function AdminPromosPanel() {
-  const { lock } = useAdmin();
+/** Promos et leurs élèves, importables dans n'importe quelle grille. */
+function PromosPanel() {
   const [promos, setPromos] = useState(null);
   const [error, setError] = useState(null);
   const [newPromoName, setNewPromoName] = useState("");
@@ -306,19 +260,7 @@ function AdminPromosPanel() {
   };
 
   return (
-    <main className="page">
-      <PageHeader
-        breadcrumbs={[{ label: "Espace" }, { label: "Admin" }]}
-        title="Panneau admin"
-        subtitle="Gérez les promos et leurs élèves, importables dans n'importe quelle grille."
-        actions={
-          <>
-            <Link to="/" className="btn text"><Icon name="arrowLeft" />Retour</Link>
-            <button type="button" className="btn ghost" onClick={lock}><Icon name="lock" />Verrouiller</button>
-          </>
-        }
-      />
-
+    <>
       {error && (
         <div className="error-box" role="alert">
           <Icon name="alert" />
@@ -399,12 +341,141 @@ function AdminPromosPanel() {
           </section>
         )}
       </div>
-    </main>
+    </>
   );
 }
 
+/** Comptes inscrits et attribution du rôle administrateur. */
+function UsersPanel() {
+  const { user: currentUser } = useAuth();
+  const [users, setUsers] = useState(null);
+  const [error, setError] = useState(null);
+  const [savingId, setSavingId] = useState(null);
+
+  const showError = (e) => setError(e.details?.length ? e.details.join(" ") : e.message);
+
+  useEffect(() => {
+    fetchUsersAdmin().then(setUsers).catch(showError);
+  }, []);
+
+  const toggleRole = async (u) => {
+    const role = u.role === "admin" ? "user" : "admin";
+    const who = u.name || u.email;
+    const question = role === "admin"
+      ? `Donner les droits administrateur à ${who} ?`
+      : `Retirer les droits administrateur à ${who} ?`;
+    if (!window.confirm(question)) return;
+    setSavingId(u.id);
+    setError(null);
+    try {
+      const updated = await updateUserRoleAdmin(u.id, role);
+      setUsers((list) => list.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (err) {
+      showError(err);
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  return (
+    <>
+      {error && (
+        <div className="error-box" role="alert">
+          <Icon name="alert" />
+          <p>{error}</p>
+        </div>
+      )}
+
+      <section className="block">
+        <h2 className="block-title">Utilisateurs <span className="count">{users?.length ?? 0}</span></h2>
+        <p className="muted">Les administrateurs ont accès à ce panneau : promos et gestion des rôles.</p>
+        {users === null && <Loading />}
+        {users?.length > 0 && (
+          <div className="table-wrap">
+            <table className="data-table">
+              <caption className="sr-only">Comptes et rôles</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Compte</th>
+                  <th scope="col">Rôle</th>
+                  <th scope="col"><span className="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id}>
+                    <td>
+                      <span className="cell-stack">
+                        <strong>{u.name || u.email}</strong>
+                        {u.name && <span className="muted cell-meta">{u.email}</span>}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`status${u.role === "admin" ? "" : " is-muted"}`}>
+                        <span className="status-dot" aria-hidden="true" />
+                        {ROLE_LABELS[u.role]}
+                      </span>
+                    </td>
+                    <td className="actions">
+                      {u.id === currentUser.id ? (
+                        <span className="muted cell-meta">Vous</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className={`btn text small${u.role === "admin" ? " danger" : ""}`}
+                          onClick={() => toggleRole(u)}
+                          disabled={savingId === u.id}
+                        >
+                          <Icon name="shield" />
+                          {u.role === "admin" ? "Retirer admin" : "Nommer admin"}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </>
+  );
+}
+
+const TABS = [
+  { id: "promos", label: "Promos" },
+  { id: "utilisateurs", label: "Utilisateurs" },
+];
+
 export default function AdminPage() {
   useDocumentTitle("Panneau admin");
-  const { unlocked } = useAdmin();
-  return unlocked ? <AdminPromosPanel /> : <AdminLockScreen />;
+  const [tab, setTab] = useState("promos");
+
+  return (
+    <main className="page">
+      <PageHeader
+        breadcrumbs={[{ label: "Espace" }, { label: "Admin" }]}
+        title="Panneau admin"
+        subtitle="Gérez les promos, importables dans n'importe quelle grille, et les administrateurs."
+        actions={<Link to="/" className="btn ghost"><Icon name="arrowLeft" />Retour</Link>}
+      />
+
+      <div className="segmented" data-active={TABS.findIndex((t) => t.id === tab)} role="group" aria-label="Section du panneau admin">
+        <span className="segmented-indicator" aria-hidden="true" />
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            className={`segmented-item${tab === t.id ? " active" : ""}`}
+            aria-pressed={tab === t.id}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "promos" ? <PromosPanel /> : <UsersPanel />}
+    </main>
+  );
 }
