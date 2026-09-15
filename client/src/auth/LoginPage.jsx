@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "./AuthContext.jsx";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
+import Logo from "../components/Logo.jsx";
+import Icon from "../components/Icon.jsx";
 
 const MODE_TITLES = { login: "Connexion", register: "Créer un compte", verify: "Vérifier l'e-mail" };
 
@@ -64,31 +66,42 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="page" style={{ maxWidth: 420 }}>
-      <div className="page-head">
-        <div>
-          <h1>
-            {mode === "login" && "Connexion"}
-            {mode === "register" && "Créer un compte"}
-            {mode === "verify" && "Vérifier l'e-mail"}
-          </h1>
-          <p className="sub">
-            {mode === "verify" ? "Saisis le code reçu par e-mail." : "Utilisez votre adresse @ynov.com."}
-          </p>
+    <div className="auth">
+      <aside className="auth-brand" aria-hidden="true">
+        <Logo tone="light" size={36} />
+        <div className="auth-brand-art">
+          {Array.from({ length: 20 }, (_, i) => (
+            <span key={i} className={[6, 8, 12, 17].includes(i) ? "is-on" : undefined} />
+          ))}
         </div>
+        <p className="auth-brand-title">Grilles de notation</p>
+      </aside>
+
+    <main className="auth-main">
+      <div className="auth-panel">
+      <Logo size={32} className="auth-logo" />
+      <div className="auth-head">
+        <h1>
+          {mode === "login" && "Connexion"}
+          {mode === "register" && "Créer un compte"}
+          {mode === "verify" && "Vérifier l'e-mail"}
+        </h1>
+        <p className="sub">
+          {mode === "verify" ? "Saisis le code reçu par e-mail." : "Utilisez votre adresse @ynov.com."}
+        </p>
       </div>
 
       <form onSubmit={submit}>
-        <section className="panel">
+        <section className="stack">
           {mode === "register" && (
-            <label className="field" style={{ marginBottom: 14 }}>
+            <label className="field">
               <span>Nom</span>
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Prénom Nom" autoComplete="name" />
             </label>
           )}
 
           {mode !== "verify" && (
-            <label className="field" style={{ marginBottom: 14 }}>
+            <label className="field">
               <span>E-mail</span>
               <input
                 type="email"
@@ -138,14 +151,15 @@ export default function LoginPage() {
           )}
         </section>
 
-        {info && <div className="info-box" role="status">{info}</div>}
+        {info && <div className="info-box" role="status"><Icon name="mail" />{info}</div>}
         {errors && (
           <div className="error-box" role="alert">
+            <Icon name="alert" />
             <ul>{errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
           </div>
         )}
 
-        <button type="submit" className="btn primary" disabled={saving}>
+        <button type="submit" className="btn primary block lg" disabled={saving}>
           {saving
             ? "Patiente…"
             : mode === "login"
@@ -155,30 +169,33 @@ export default function LoginPage() {
             : "Valider le code"}
         </button>
 
-        {mode === "verify" ? (
-          <>
-            <button type="button" className="btn ghost" style={{ marginLeft: 10 }} onClick={handleResend}>
-              Renvoyer le code
+        <div className="auth-alt">
+          {mode === "verify" ? (
+            <>
+              <button type="button" className="btn ghost" onClick={handleResend}>
+                Renvoyer le code
+              </button>
+              <button type="button" className="btn text" onClick={cancelVerify}>
+                Annuler
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="btn ghost block"
+              onClick={() => {
+                setMode(mode === "login" ? "register" : "login");
+                setErrors(null);
+                setInfo(null);
+              }}
+            >
+              {mode === "login" ? "Créer un compte" : "J'ai déjà un compte"}
             </button>
-            <button type="button" className="btn ghost" style={{ marginLeft: 10 }} onClick={cancelVerify}>
-              Annuler
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            className="btn ghost"
-            style={{ marginLeft: 10 }}
-            onClick={() => {
-              setMode(mode === "login" ? "register" : "login");
-              setErrors(null);
-              setInfo(null);
-            }}
-          >
-            {mode === "login" ? "Créer un compte" : "J'ai déjà un compte"}
-          </button>
-        )}
+          )}
+        </div>
       </form>
+      </div>
     </main>
+    </div>
   );
 }

@@ -5,6 +5,8 @@ import CategoryCriteriaEditor from "./CategoryCriteriaEditor.jsx";
 import GridPreview from "./GridPreview.jsx";
 import { exportBlankGridPdf } from "../pdf.js";
 import { useDocumentTitle } from "../../../hooks/useDocumentTitle.js";
+import PageHeader from "../../../components/PageHeader.jsx";
+import Icon from "../../../components/Icon.jsx";
 
 /** Formulaire de grille (nom, niveaux, catégories, critères), utilisé pour la création et l'édition. */
 export default function GridForm({ title, subtitle, submitLabel, initial, saving, errors, onSubmit }) {
@@ -47,58 +49,83 @@ export default function GridForm({ title, subtitle, submitLabel, initial, saving
 
   return (
     <main className="page">
-      <div className="page-head">
-        <div>
-          <h1>{title}</h1>
-          <p className="sub">{subtitle}</p>
-        </div>
-        <Link to="/" className="btn ghost">Annuler</Link>
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Mes grilles", to: "/" }, { label: title }]}
+        title={title}
+        subtitle={subtitle}
+        actions={<Link to="/" className="btn ghost">Annuler</Link>}
+      />
 
       <form onSubmit={submit}>
-        <section className="panel">
-          <label className="field">
-            <span>Nom de la grille</span>
+        <section className="section">
+          <div className="section-aside">
+            <span className="section-index" aria-hidden="true">01</span>
+            <label htmlFor="grid-name" className="section-title">Nom de la grille</label>
+          </div>
+          <div className="section-body">
             <input
+              id="grid-name"
+              className="input-lg"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Soutenance Finale"
               autoFocus
             />
-          </label>
-        </section>
-
-        <section className="panel">
-          <h2>Niveaux d'acquisition</h2>
-          <p className="hint">Cinq niveaux fixes. Le barème (%) définit la part de la note obtenue à chaque niveau.</p>
-          <LevelsEditor levels={levels} onChange={setLevels} />
-        </section>
-
-        <section className="panel">
-          <h2>Catégories et critères</h2>
-          <CategoryCriteriaEditor
-            categories={categories}
-            criteria={criteria}
-            onCategoriesChange={updateCategories}
-            onCriteriaChange={setCriteria}
-          />
-        </section>
-
-        {errors && (
-          <div className="error-box" role="alert">
-            <ul>{errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
           </div>
-        )}
+        </section>
 
-        <button type="submit" className="btn primary" disabled={saving}>
-          {saving ? "Enregistrement…" : submitLabel}
-        </button>
+        <section className="section">
+          <div className="section-aside">
+            <span className="section-index" aria-hidden="true">02</span>
+            <h2 className="section-title">Niveaux d'acquisition</h2>
+            <p className="hint">Cinq niveaux fixes. Le barème (%) définit la part de la note obtenue à chaque niveau.</p>
+          </div>
+          <div className="section-body">
+            <LevelsEditor levels={levels} onChange={setLevels} />
+          </div>
+        </section>
+
+        <section className="section">
+          <div className="section-aside">
+            <span className="section-index" aria-hidden="true">03</span>
+            <h2 className="section-title">Catégories et critères</h2>
+            <p className="hint">
+              La note finale est la moyenne des notes de catégorie (chaque catégorie compte pour un
+              poids égal). Dans une catégorie, le nombre de points d'un critère ne joue que face aux
+              autres critères de cette même catégorie.
+            </p>
+          </div>
+          <div className="section-body">
+            <CategoryCriteriaEditor
+              categories={categories}
+              criteria={criteria}
+              onCategoriesChange={updateCategories}
+              onCriteriaChange={setCriteria}
+            />
+          </div>
+        </section>
+
+        <div className="form-footer">
+          {errors && (
+            <div className="error-box" role="alert">
+              <Icon name="alert" />
+              <ul>{errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
+            </div>
+          )}
+          <button type="submit" className="btn primary" disabled={saving}>
+            {saving ? "Enregistrement…" : submitLabel}
+          </button>
+        </div>
       </form>
 
-      <section className="panel">
-        <div className="page-head" style={{ marginBottom: 14 }}>
-          <h2 style={{ margin: 0 }}>Aperçu de la grille vierge</h2>
+      <section className="section section-stacked">
+        <div className="section-head">
+          <div>
+            <span className="section-index" aria-hidden="true">04</span>
+            <h2 className="section-title">Aperçu de la grille vierge</h2>
+          </div>
           <button type="button" className="btn ghost small" onClick={exportBlank}>
+            <Icon name="fileText" />
             Exporter en PDF
           </button>
         </div>

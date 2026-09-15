@@ -17,6 +17,8 @@ import {
 } from "../../../api/groups.js";
 import { fetchPromos } from "../../../api/promos.js";
 import Loading from "../../../components/Loading.jsx";
+import Icon from "../../../components/Icon.jsx";
+import PageHeader from "../../../components/PageHeader.jsx";
 import { useDocumentTitle } from "../../../hooks/useDocumentTitle.js";
 import { readCsvFile } from "../../../utils/readCsvFile.js";
 
@@ -170,175 +172,234 @@ export default function GridStudentsPage() {
 
   return (
     <main className="page">
-      <div className="page-head">
-        <div>
-          <h1>Élèves{grid ? ` - ${grid.name}` : ""}</h1>
-          <p className="sub">Ajoutez des élèves manuellement ou importez un export CSV.</p>
-        </div>
-        <Link to="/" className="btn ghost">Retour</Link>
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Mes grilles", to: "/" }, { label: grid?.name ?? "…" }, { label: "Élèves" }]}
+        title={`Élèves${grid ? ` - ${grid.name}` : ""}`}
+        subtitle="Ajoutez des élèves manuellement ou importez un export CSV."
+        actions={<Link to="/" className="btn ghost"><Icon name="arrowLeft" />Retour</Link>}
+      />
 
       {error && (
         <div className="error-box" role="alert">
+          <Icon name="alert" />
           <p>{error}</p>
         </div>
       )}
 
-      <section className="panel">
-        <h2>Ajouter un élève</h2>
-        <form className="student-form" onSubmit={addStudent}>
-          <input
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            placeholder="Nom"
-            required
-          />
-          <input
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            placeholder="Prénom"
-          />
-          <button type="submit" className="btn primary small" disabled={adding}>
-            {adding ? "Ajout…" : "+ Ajouter"}
-          </button>
-        </form>
+      <section className="section">
+        <div className="section-aside">
+          <span className="section-index" aria-hidden="true">01</span>
+          <h2 className="section-title">Ajouter un élève</h2>
+        </div>
+        <div className="section-body">
+          <form className="student-form" onSubmit={addStudent}>
+            <input
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Nom"
+              aria-label="Nom"
+              required
+            />
+            <input
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Prénom"
+              aria-label="Prénom"
+            />
+            <button type="submit" className="btn primary" disabled={adding}>
+              <Icon name="plus" />
+              {adding ? "Ajout…" : "Ajouter"}
+            </button>
+          </form>
+        </div>
       </section>
 
-      <section className="panel">
-        <h2>Importer un CSV</h2>
-        <p className="hint">
-          Colonnes attendues : « Nom » (obligatoire) et « Prénom ». Séparateur virgule ou
-          point-virgule détecté automatiquement. Les élèves importés s'ajoutent à la liste existante.
-        </p>
-        <input
-          ref={fileInput}
-          className="file-input"
-          type="file"
-          accept=".csv,text/csv"
-          onChange={onImportFile}
-          disabled={importing}
-        />
+      <section className="section">
+        <div className="section-aside">
+          <span className="section-index" aria-hidden="true">02</span>
+          <h2 className="section-title">Importer un CSV</h2>
+          <p className="hint">
+            Colonnes attendues : « Nom » (obligatoire) et « Prénom ». Séparateur virgule ou
+            point-virgule détecté automatiquement. Les élèves importés s'ajoutent à la liste existante.
+          </p>
+        </div>
+        <div className="section-body">
+          <input
+            ref={fileInput}
+            className="file-input"
+            type="file"
+            accept=".csv,text/csv"
+            aria-label="Fichier CSV d'élèves"
+            onChange={onImportFile}
+            disabled={importing}
+          />
+        </div>
       </section>
 
-      <section className="panel">
-        <h2>Importer une promo</h2>
-        {promos.length === 0 ? (
-          <p className="hint">Aucune promo disponible. Un administrateur peut en ajouter depuis le panneau admin.</p>
-        ) : (
-          <>
-            <p className="hint">Ajoute les élèves de la promo sélectionnée à la liste existante.</p>
+      <section className="section">
+        <div className="section-aside">
+          <span className="section-index" aria-hidden="true">03</span>
+          <h2 className="section-title">Importer une promo</h2>
+          {promos.length > 0 && <p className="hint">Ajoute les élèves de la promo sélectionnée à la liste existante.</p>}
+        </div>
+        <div className="section-body">
+          {promos.length === 0 ? (
+            <p className="notice"><Icon name="info" />Aucune promo disponible. Un administrateur peut en ajouter depuis le panneau admin.</p>
+          ) : (
             <div className="promo-import-row">
-              <select value={selectedPromoId} onChange={(e) => setSelectedPromoId(e.target.value)}>
-                <option value="">Sélectionner une promo…</option>
-                {promos.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.students_count} élève{p.students_count > 1 ? "s" : ""})
-                  </option>
-                ))}
-              </select>
+              <div className="select-wrap">
+                <select value={selectedPromoId} onChange={(e) => setSelectedPromoId(e.target.value)} aria-label="Promo">
+                  <option value="">Sélectionner une promo…</option>
+                  {promos.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.students_count} élève{p.students_count > 1 ? "s" : ""})
+                    </option>
+                  ))}
+                </select>
+                <Icon name="chevronDown" className="select-chevron" />
+              </div>
               <button
                 type="button"
-                className="btn ghost small"
+                className="btn ghost"
                 onClick={importFromPromo}
                 disabled={!selectedPromoId || importingPromo}
               >
+                <Icon name="download" />
                 {importingPromo ? "Import…" : "Importer les étudiants"}
               </button>
             </div>
-          </>
-        )}
+          )}
+        </div>
       </section>
 
-      <section className="panel">
-        <h2>Groupes</h2>
-        <p className="hint">
-          Créez des groupes (ex. équipes de projet) pour pouvoir les évaluer d'un coup depuis la page Évaluer.
-        </p>
-        <form className="student-form" onSubmit={addGroup}>
-          <input
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
-            placeholder="Nom du groupe"
-            required
-          />
-          <button type="submit" className="btn primary small" disabled={addingGroup}>
-            {addingGroup ? "Ajout…" : "+ Ajouter"}
-          </button>
-        </form>
-        {groups?.length > 0 && (
-          <ul className="grid-list group-list">
-            {groups.map((g) => {
-              const memberCount = students?.filter((s) => s.group_id === g.id).length ?? 0;
-              return (
-                <li key={g.id} className="card group-card">
-                  <div className="group-card-head">
-                    <div className="card-info">
-                      <strong>{g.name}</strong>
-                      <span className="muted">{memberCount} élève{memberCount > 1 ? "s" : ""}</span>
-                    </div>
-                    <div className="card-actions">
-                      <button type="button" className="btn ghost small danger" onClick={() => removeGroup(g)}>
+      <section className="section">
+        <div className="section-aside">
+          <span className="section-index" aria-hidden="true">04</span>
+          <h2 className="section-title">Groupes</h2>
+          <p className="hint">
+            Créez des groupes (ex. équipes de projet) pour pouvoir les évaluer d'un coup depuis la page Évaluer.
+          </p>
+        </div>
+        <div className="section-body">
+          <form className="student-form" onSubmit={addGroup}>
+            <input
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="Nom du groupe"
+              aria-label="Nom du groupe"
+              required
+            />
+            <button type="submit" className="btn primary" disabled={addingGroup}>
+              <Icon name="plus" />
+              {addingGroup ? "Ajout…" : "Ajouter"}
+            </button>
+          </form>
+          {groups?.length > 0 && (
+            <ul className="group-list">
+              {groups.map((g) => {
+                const memberCount = students?.filter((s) => s.group_id === g.id).length ?? 0;
+                return (
+                  <li key={g.id} className="group-card">
+                    <div className="group-card-head">
+                      <div className="cell-title">
+                        <span className="row-mark" aria-hidden="true"><Icon name="users" size={16} /></span>
+                        <div className="cell-stack">
+                          <strong>{g.name}</strong>
+                          <span className="muted cell-meta">{memberCount} élève{memberCount > 1 ? "s" : ""}</span>
+                        </div>
+                      </div>
+                      <button type="button" className="btn text small danger" onClick={() => removeGroup(g)}>
+                        <Icon name="trash" />
                         Supprimer
                       </button>
                     </div>
-                  </div>
-                  {students?.length > 0 && (
-                    <div className="group-members-picker">
-                      {students.map((s) => (
-                        <label key={s.id} className="group-member-checkbox">
-                          <input
-                            type="checkbox"
-                            checked={s.group_id === g.id}
-                            onChange={(e) => changeStudentGroup(s, e.target.checked ? g.id : null)}
-                          />
-                          {s.last_name} {s.first_name}
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                    {students?.length > 0 && (
+                      <fieldset className="group-members-picker">
+                        <legend className="sr-only">Membres du groupe {g.name}</legend>
+                        {students.map((s) => (
+                          <label key={s.id} className="check">
+                            <input
+                              type="checkbox"
+                              checked={s.group_id === g.id}
+                              onChange={(e) => changeStudentGroup(s, e.target.checked ? g.id : null)}
+                            />
+                            <span className="check-box" aria-hidden="true"><Icon name="check" size={11} strokeWidth="3" /></span>
+                            <span className="check-label">{s.last_name} {s.first_name}</span>
+                          </label>
+                        ))}
+                      </fieldset>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       </section>
 
-      <section className="panel">
-        <h2>Liste ({students?.length ?? 0})</h2>
+      <section className="section section-stacked">
+        <div className="section-head">
+          <div>
+            <span className="section-index" aria-hidden="true">05</span>
+            <h2 className="section-title">Liste <span className="count">{students?.length ?? 0}</span></h2>
+          </div>
+        </div>
         {students === null && <Loading />}
         {students?.length === 0 && <p className="muted">Aucun élève pour l'instant.</p>}
         {students?.length > 0 && (
-          <ul className="grid-list">
-            {students.map((s) => (
-              <li key={s.id} className="card">
-                {editingId === s.id ? (
-                  <>
-                    <div className="card-info student-form">
-                      <input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} placeholder="Nom" />
-                      <input value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} placeholder="Prénom" />
-                    </div>
-                    <div className="card-actions">
-                      <button type="button" className="btn primary small" onClick={() => saveEdit(s)}>Enregistrer</button>
-                      <button type="button" className="btn ghost small" onClick={cancelEdit}>Annuler</button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="card-info">
-                      <strong>{s.last_name} {s.first_name}</strong>
-                      <span className="muted student-group-label">
-                        {groups?.find((g) => g.id === s.group_id)?.name ?? "Sans groupe"}
-                      </span>
-                    </div>
-                    <div className="card-actions">
-                      <button type="button" className="btn ghost small" onClick={() => startEdit(s)}>Modifier</button>
-                      <button type="button" className="btn ghost small danger" onClick={() => removeStudent(s)}>Supprimer</button>
-                    </div>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
+          <div className="table-wrap">
+            <table className="data-table">
+              <caption className="sr-only">Liste des élèves ({students.length})</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Élève</th>
+                  <th scope="col">Groupe</th>
+                  <th scope="col"><span className="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {students.map((s) => {
+                  const groupName = groups?.find((g) => g.id === s.group_id)?.name;
+                  return editingId === s.id ? (
+                    <tr key={s.id} className="is-editing">
+                      <td colSpan={2}>
+                        <div className="student-form">
+                          <input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} placeholder="Nom" aria-label="Nom" />
+                          <input value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} placeholder="Prénom" aria-label="Prénom" />
+                        </div>
+                      </td>
+                      <td className="actions">
+                        <div className="row-actions">
+                          <button type="button" className="btn primary small" onClick={() => saveEdit(s)}>Enregistrer</button>
+                          <button type="button" className="btn ghost small" onClick={cancelEdit}>Annuler</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={s.id}>
+                      <td><strong>{s.last_name}</strong> {s.first_name}</td>
+                      <td>
+                        <span className={`status${groupName ? "" : " is-muted"}`}>
+                          <span className="status-dot" aria-hidden="true" />
+                          {groupName ?? "Sans groupe"}
+                        </span>
+                      </td>
+                      <td className="actions">
+                        <div className="row-actions">
+                          <button type="button" className="btn text small" onClick={() => startEdit(s)}>
+                            <Icon name="pencil" />Modifier
+                          </button>
+                          <button type="button" className="btn text small danger" onClick={() => removeStudent(s)}>
+                            <Icon name="trash" />Supprimer
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </main>

@@ -5,10 +5,14 @@ import { fetchStudents, updateStudent as updateStudentApi } from "../../../api/s
 import { fetchGroups } from "../../../api/groups.js";
 import { fetchMarks, setMark as setMarkApi, setGroupMark as setGroupMarkApi } from "../../../api/marks.js";
 import LevelPicker from "../components/LevelPicker.jsx";
+import { LEVEL_COLORS } from "../defaults.js";
 import { computeGrade, computeCategoryGrades, criterionPoints, formatGrade, formatPoints, suggestAppreciation } from "../grade.js";
 import { exportStudentPdf, exportAllStudentsZip } from "../pdf.js";
 import { exportGradesCsv } from "../csvExport.js";
 import Loading from "../../../components/Loading.jsx";
+import Icon from "../../../components/Icon.jsx";
+import PageHeader from "../../../components/PageHeader.jsx";
+import EmptyState from "../../../components/EmptyState.jsx";
 import { useDocumentTitle } from "../../../hooks/useDocumentTitle.js";
 
 const markKey = (studentId, criterionId) => `${studentId}:${criterionId}`;
@@ -53,7 +57,10 @@ function CriteriaTableHeader({ levels }) {
       <span className="eval-crit-name">Critère</span>
       <div className="level-picker-header">
         {levels.map((l) => (
-          <span key={l.position} className="level-header-label" title={l.label}>{l.label}</span>
+          <span key={l.position} className="level-header-label" title={l.label} style={{ "--level": LEVEL_COLORS[l.position] }}>
+            <span className="level-header-swatch" aria-hidden="true" />
+            {l.label}
+          </span>
         ))}
       </div>
       <span className="eval-crit-points">Points</span>
@@ -241,57 +248,63 @@ export default function GridEvaluatePage() {
   if (!grid || !students || !groups) {
     return (
       <main className="page">
-        {error ? <p className="error-box" role="alert">{error}</p> : <Loading />}
+        {error ? <p className="error-box" role="alert"><Icon name="alert" />{error}</p> : <Loading />}
       </main>
     );
   }
 
   return (
     <main className="page eval-page">
-      <div className="page-head">
-        <div>
-          <h1>Évaluer - {grid.name}</h1>
-          <p className="sub">Choisissez un niveau pour chaque critère.</p>
-        </div>
-        <div className="page-head-actions">
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={exportCsv}
-            disabled={!students?.length}
-          >
-            Exporter les notes (.csv)
-          </button>
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={exportAllZip}
-            disabled={exportingZip || !students?.length}
-          >
-            {exportingZip ? "Export…" : "Exporter tous (.zip)"}
-          </button>
-          <Link to="/" className="btn ghost">Retour</Link>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Mes grilles", to: "/" }, { label: grid.name }, { label: "Évaluer" }]}
+        title={`Évaluer - ${grid.name}`}
+        subtitle="Choisissez un niveau pour chaque critère."
+        actions={
+          <>
+            <Link to="/" className="btn text"><Icon name="arrowLeft" />Retour</Link>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={exportCsv}
+              disabled={!students?.length}
+            >
+              <Icon name="sheet" />
+              Exporter les notes (.csv)
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={exportAllZip}
+              disabled={exportingZip || !students?.length}
+            >
+              <Icon name="archive" />
+              {exportingZip ? "Export…" : "Exporter tous (.zip)"}
+            </button>
+          </>
+        }
+      />
 
       {error && (
         <div className="error-box" role="alert">
+          <Icon name="alert" />
           <p>{error}</p>
         </div>
       )}
 
       {students.length === 0 ? (
-        <div className="empty">
-          <h2>Aucun élève dans cette grille</h2>
-          <p className="muted">Ajoutez des élèves avant de saisir des évaluations.</p>
-          <Link to={`/grilles/${id}/eleves`} className="btn primary">Gérer les élèves</Link>
-        </div>
+        <EmptyState
+          title="Aucun élève dans cette grille"
+          action={<Link to={`/grilles/${id}/eleves`} className="btn primary"><Icon name="users" />Gérer les élèves</Link>}
+        >
+          Ajoutez des élèves avant de saisir des évaluations.
+        </EmptyState>
       ) : (
         <>
-          <div className="view-toggle" role="group" aria-label="Mode d'évaluation">
+          <div className="segmented" data-active={mode === "individuel" ? 0 : 1} role="group" aria-label="Mode d'évaluation">
+            <span className="segmented-indicator" aria-hidden="true" />
             <button
               type="button"
-              className={`btn ghost small${mode === "individuel" ? " active" : ""}`}
+              className={`segmented-item${mode === "individuel" ? " active" : ""}`}
               aria-pressed={mode === "individuel"}
               onClick={() => switchMode("individuel")}
             >
@@ -299,7 +312,7 @@ export default function GridEvaluatePage() {
             </button>
             <button
               type="button"
-              className={`btn ghost small${mode === "groupe" ? " active" : ""}`}
+              className={`segmented-item${mode === "groupe" ? " active" : ""}`}
               aria-pressed={mode === "groupe"}
               onClick={() => switchMode("groupe")}
             >
@@ -308,15 +321,20 @@ export default function GridEvaluatePage() {
           </div>
 
           {mode === "groupe" && groups.length === 0 ? (
-            <div className="empty">
-              <h2>Aucun groupe configuré</h2>
-              <p className="muted">Créez des groupes et assignez-y des élèves depuis la page Élèves.</p>
-              <Link to={`/grilles/${id}/eleves`} className="btn primary">Gérer les groupes</Link>
-            </div>
+            <EmptyState
+              title="Aucun groupe configuré"
+              action={<Link to={`/grilles/${id}/eleves`} className="btn primary"><Icon name="users" />Gérer les groupes</Link>}
+            >
+              Créez des groupes et assignez-y des élèves depuis la page Élèves.
+            </EmptyState>
           ) : (
-            <section className="panel eval-panel">
+            <section className="eval-panel">
               <div className="eval-layout">
                 <nav className="eval-sidebar" aria-label={mode === "individuel" ? "Liste des élèves" : "Liste des groupes"}>
+                  <p className="eval-sidebar-label" aria-hidden="true">
+                    {mode === "individuel" ? "Élèves" : "Groupes"}
+                    <span>{list.length}</span>
+                  </p>
                   {list.map((item, i) => {
                     const complete = mode === "individuel" ? studentComplete(item.id) : groupComplete(item.id);
                     return (
@@ -344,39 +362,48 @@ export default function GridEvaluatePage() {
 
                 <div className="eval-main">
                   <div className="eval-nav">
-                    <button type="button" className="btn ghost small" onClick={goPrev} disabled={index <= 0}>
-                      ‹ Précédent
-                    </button>
                     <div className="eval-current">
                       <span className="eval-avatar" aria-hidden="true">{initialsFor(current, mode)}</span>
-                      <span className="eval-current-label">
-                        {mode === "individuel" ? "Élève" : "Groupe"} {index + 1} / {list.length}
-                      </span>
-                      <h2 className="eval-current-name">
-                        {current?.name ?? `${current?.last_name} ${current?.first_name}`}
-                        {current && (
-                          <span
-                            className={`eval-status-dot lg ${grade?.complete ? "complete" : "incomplete"}`}
-                            title={grade?.complete ? "Évaluation complète" : "Évaluation incomplète"}
-                          />
+                      <div className="eval-current-text">
+                        <span className="eval-current-label">
+                          {mode === "individuel" ? "Élève" : "Groupe"} {index + 1} / {list.length}
+                        </span>
+                        <h2 className="eval-current-name">
+                          {current?.name ?? `${current?.last_name} ${current?.first_name}`}
+                          {current && (
+                            <span
+                              className={`eval-status-dot lg ${grade?.complete ? "complete" : "incomplete"}`}
+                              title={grade?.complete ? "Évaluation complète" : "Évaluation incomplète"}
+                            />
+                          )}
+                        </h2>
+                        {mode === "groupe" && (
+                          <p className="eval-current-members">
+                            {members.length > 0
+                              ? members.map((m) => `${m.last_name} ${m.first_name}`).join(", ")
+                              : "Ce groupe n'a aucun élève pour l'instant."}
+                          </p>
                         )}
-                      </h2>
-                      {mode === "groupe" && (
-                        <p className="eval-current-members">
-                          {members.length > 0
-                            ? members.map((m) => `${m.last_name} ${m.first_name}`).join(", ")
-                            : "Ce groupe n'a aucun élève pour l'instant."}
-                        </p>
-                      )}
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      className="btn ghost small"
-                      onClick={goNext}
-                      disabled={index >= list.length - 1}
-                    >
-                      Suivant ›
-                    </button>
+                    <div className="eval-stepper">
+                      <button type="button" className="btn ghost small" onClick={goPrev} disabled={index <= 0}>
+                        <Icon name="chevronLeft" />
+                        Précédent
+                      </button>
+                      <button
+                        type="button"
+                        className="btn ghost small"
+                        onClick={goNext}
+                        disabled={index >= list.length - 1}
+                      >
+                        Suivant
+                        <Icon name="chevronRight" />
+                      </button>
+                    </div>
+                    <div className="eval-progress" aria-hidden="true">
+                      <span style={{ width: `${((index + 1) / list.length) * 100}%` }} />
+                    </div>
                   </div>
 
                   <CriteriaTableHeader levels={grid.levels} />
@@ -433,46 +460,56 @@ export default function GridEvaluatePage() {
 
                   {current && grade && (
                     <div className="eval-grade-block">
-                      <div className="eval-grade-score">
-                        <span className="eval-grade-value">{formatGrade(grade.grade20)}</span>
-                        <span className="eval-grade-max">/ 20</span>
+                      <div className="eval-grade-summary">
+                        <div className="eval-grade-score">
+                          <span className="eval-grade-value">{formatGrade(grade.grade20)}</span>
+                          <span className="eval-grade-max">/ 20</span>
+                        </div>
+                        <div className="meter" aria-hidden="true">
+                          <span style={{ width: `${grade.totalCount ? (grade.evaluatedCount / grade.totalCount) * 100 : 0}%` }} />
+                        </div>
+                        <p className="muted small">
+                          {grade.evaluatedCount} / {grade.totalCount} critère{grade.totalCount > 1 ? "s" : ""} évalué
+                          {grade.totalCount > 1 ? "s" : ""}
+                          {!grade.complete && grade.evaluatedCount > 0 ? " - évaluation partielle" : ""}
+                        </p>
                       </div>
-                      <p className="muted small">
-                        {grade.evaluatedCount} / {grade.totalCount} critère{grade.totalCount > 1 ? "s" : ""} évalué
-                        {grade.totalCount > 1 ? "s" : ""}
-                        {!grade.complete && grade.evaluatedCount > 0 ? " - évaluation partielle" : ""}
-                      </p>
-                      <div className="field">
-                        <span>Appréciation</span>
-                        <textarea
-                          rows={3}
-                          value={comment}
-                          placeholder={suggestAppreciation(grade.grade20) || "Aucun critère évalué pour l'instant."}
-                          onChange={(e) => setComment(e.target.value)}
-                        />
-                      </div>
-                      <div className="card-actions">
-                        <button
-                          type="button"
-                          className="btn ghost small"
-                          onClick={() => setComment(suggestAppreciation(grade.grade20))}
-                          disabled={grade.grade20 === null}
-                        >
-                          Utiliser la suggestion
-                        </button>
-                        <button
-                          type="button"
-                          className="btn primary small"
-                          onClick={saveComment}
-                          disabled={savingComment}
-                        >
-                          {savingComment ? "Enregistrement…" : "Enregistrer l'appréciation"}
-                        </button>
-                        {mode === "individuel" && (
-                          <button type="button" className="btn ghost small" onClick={exportCurrentPdf}>
-                            Exporter en PDF
+                      <div className="eval-grade-comment">
+                        <label className="field">
+                          <span>Appréciation</span>
+                          <textarea
+                            rows={3}
+                            value={comment}
+                            placeholder={suggestAppreciation(grade.grade20) || "Aucun critère évalué pour l'instant."}
+                            onChange={(e) => setComment(e.target.value)}
+                          />
+                        </label>
+                        <div className="eval-grade-actions">
+                          <button
+                            type="button"
+                            className="btn text small"
+                            onClick={() => setComment(suggestAppreciation(grade.grade20))}
+                            disabled={grade.grade20 === null}
+                          >
+                            <Icon name="bulb" />
+                            Utiliser la suggestion
                           </button>
-                        )}
+                          <span className="spacer" />
+                          {mode === "individuel" && (
+                            <button type="button" className="btn ghost small" onClick={exportCurrentPdf}>
+                              <Icon name="fileText" />
+                              Exporter en PDF
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="btn primary small"
+                            onClick={saveComment}
+                            disabled={savingComment}
+                          >
+                            {savingComment ? "Enregistrement…" : "Enregistrer l'appréciation"}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}

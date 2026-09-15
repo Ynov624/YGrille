@@ -14,6 +14,8 @@ import {
 } from "../../../api/admin.js";
 import { readCsvFile } from "../../../utils/readCsvFile.js";
 import Loading from "../../../components/Loading.jsx";
+import Icon from "../../../components/Icon.jsx";
+import PageHeader from "../../../components/PageHeader.jsx";
 import { useDocumentTitle } from "../../../hooks/useDocumentTitle.js";
 
 /** Formulaire de mot de passe, affiché tant que le panneau admin n'est pas déverrouillé. */
@@ -38,24 +40,26 @@ function AdminLockScreen() {
 
   return (
     <main className="page">
-      <div className="page-head">
-        <div>
-          <h1>Panneau admin</h1>
-          <p className="sub">Gestion des promos, réservée aux administrateurs.</p>
-        </div>
-        <Link to="/" className="btn ghost">Retour</Link>
-      </div>
-      <section className="panel" style={{ maxWidth: 420 }}>
-        <form className="field" onSubmit={submit}>
-          <span>Mot de passe administrateur</span>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoFocus
-          />
-          {error && <p className="error-box" role="alert">{error}</p>}
-          <button type="submit" className="btn primary" disabled={checking || !password}>
+      <PageHeader
+        breadcrumbs={[{ label: "Espace" }, { label: "Admin" }]}
+        title="Panneau admin"
+        subtitle="Gestion des promos, réservée aux administrateurs."
+        actions={<Link to="/" className="btn ghost"><Icon name="arrowLeft" />Retour</Link>}
+      />
+      <section className="lock-card">
+        <span className="lock-card-icon" aria-hidden="true"><Icon name="lock" size={20} /></span>
+        <form className="stack" onSubmit={submit}>
+          <label className="field">
+            <span>Mot de passe administrateur</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoFocus
+            />
+          </label>
+          {error && <p className="error-box" role="alert"><Icon name="alert" />{error}</p>}
+          <button type="submit" className="btn primary block" disabled={checking || !password}>
             {checking ? "Vérification…" : "Déverrouiller"}
           </button>
         </form>
@@ -144,19 +148,21 @@ function PromoStudents({ promo, onChange }) {
     <div className="promo-students">
       {error && (
         <div className="error-box" role="alert">
+          <Icon name="alert" />
           <p>{error}</p>
         </div>
       )}
 
       <form className="student-form" onSubmit={addStudent}>
-        <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Nom" required />
-        <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Prénom" />
-        <button type="submit" className="btn primary small" disabled={adding}>
-          {adding ? "Ajout…" : "+ Ajouter"}
+        <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Nom" aria-label="Nom" required />
+        <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Prénom" aria-label="Prénom" />
+        <button type="submit" className="btn primary" disabled={adding}>
+          <Icon name="plus" />
+          {adding ? "Ajout…" : "Ajouter"}
         </button>
       </form>
 
-      <label className="field" style={{ marginTop: 12 }}>
+      <label className="field">
         <span>Importer un CSV (colonnes « Nom » / « Prénom »)</span>
         <input
           ref={fileInput}
@@ -169,36 +175,49 @@ function PromoStudents({ promo, onChange }) {
       </label>
 
       {promo.students?.length > 0 ? (
-        <ul className="grid-list" style={{ marginTop: 12 }}>
-          {promo.students.map((s) => (
-            <li key={s.id} className="card">
-              {editingId === s.id ? (
-                <>
-                  <div className="card-info student-form">
-                    <input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} placeholder="Nom" />
-                    <input value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} placeholder="Prénom" />
-                  </div>
-                  <div className="card-actions">
-                    <button type="button" className="btn primary small" onClick={() => saveEdit(s)}>Enregistrer</button>
-                    <button type="button" className="btn ghost small" onClick={cancelEdit}>Annuler</button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="card-info">
-                    <strong>{s.last_name} {s.first_name}</strong>
-                  </div>
-                  <div className="card-actions">
-                    <button type="button" className="btn ghost small" onClick={() => startEdit(s)}>Modifier</button>
-                    <button type="button" className="btn ghost small danger" onClick={() => removeStudent(s)}>Supprimer</button>
-                  </div>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
+        <div className="table-wrap">
+          <table className="data-table">
+            <caption className="sr-only">Élèves de la promo {promo.name}</caption>
+            <thead>
+              <tr>
+                <th scope="col">Élève</th>
+                <th scope="col"><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {promo.students.map((s) => (
+                editingId === s.id ? (
+                  <tr key={s.id} className="is-editing">
+                    <td>
+                      <div className="student-form">
+                        <input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} placeholder="Nom" aria-label="Nom" />
+                        <input value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} placeholder="Prénom" aria-label="Prénom" />
+                      </div>
+                    </td>
+                    <td className="actions">
+                      <div className="row-actions">
+                        <button type="button" className="btn primary small" onClick={() => saveEdit(s)}>Enregistrer</button>
+                        <button type="button" className="btn ghost small" onClick={cancelEdit}>Annuler</button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={s.id}>
+                    <td><strong>{s.last_name}</strong> {s.first_name}</td>
+                    <td className="actions">
+                      <div className="row-actions">
+                        <button type="button" className="btn text small" onClick={() => startEdit(s)}><Icon name="pencil" />Modifier</button>
+                        <button type="button" className="btn text small danger" onClick={() => removeStudent(s)}><Icon name="trash" />Supprimer</button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
-        <p className="muted small" style={{ marginTop: 12 }}>Aucun élève dans cette promo pour l'instant.</p>
+        <p className="muted small">Aucun élève dans cette promo pour l'instant.</p>
       )}
     </div>
   );
@@ -288,80 +307,98 @@ function AdminPromosPanel() {
 
   return (
     <main className="page">
-      <div className="page-head">
-        <div>
-          <h1>Panneau admin</h1>
-          <p className="sub">Gérez les promos et leurs élèves, importables dans n'importe quelle grille.</p>
-        </div>
-        <div className="page-head-actions">
-          <button type="button" className="btn ghost small" onClick={lock}>Verrouiller</button>
-          <Link to="/" className="btn ghost">Retour</Link>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Espace" }, { label: "Admin" }]}
+        title="Panneau admin"
+        subtitle="Gérez les promos et leurs élèves, importables dans n'importe quelle grille."
+        actions={
+          <>
+            <Link to="/" className="btn text"><Icon name="arrowLeft" />Retour</Link>
+            <button type="button" className="btn ghost" onClick={lock}><Icon name="lock" />Verrouiller</button>
+          </>
+        }
+      />
 
       {error && (
         <div className="error-box" role="alert">
+          <Icon name="alert" />
           <p>{error}</p>
         </div>
       )}
 
-      <section className="panel">
-        <h2>Ajouter une promo</h2>
-        <form className="student-form" onSubmit={createPromo}>
-          <input
-            value={newPromoName}
-            onChange={(e) => setNewPromoName(e.target.value)}
-            placeholder="Ex : B3 Dev 2026"
-            required
-          />
-          <button type="submit" className="btn primary small" disabled={creating}>
-            {creating ? "Ajout…" : "+ Ajouter"}
-          </button>
-        </form>
-      </section>
+      <div className={`admin-layout${selectedPromo ? " has-detail" : ""}`}>
+        <div className="admin-master">
+          <section className="block">
+            <h2 className="block-title">Ajouter une promo</h2>
+            <form className="student-form" onSubmit={createPromo}>
+              <input
+                value={newPromoName}
+                onChange={(e) => setNewPromoName(e.target.value)}
+                placeholder="Ex : B3 Dev 2026"
+                aria-label="Nom de la promo"
+                required
+              />
+              <button type="submit" className="btn primary" disabled={creating}>
+                <Icon name="plus" />
+                {creating ? "Ajout…" : "Ajouter"}
+              </button>
+            </form>
+          </section>
 
-      <section className="panel">
-        <h2>Promos ({promos?.length ?? 0})</h2>
-        {promos === null && <Loading />}
-        {promos?.length === 0 && <p className="muted">Aucune promo pour l'instant.</p>}
-        {promos?.length > 0 && (
-          <ul className="grid-list">
-            {promos.map((p) => (
-              <li key={p.id} className={`card${selectedId === p.id ? " selected" : ""}`}>
-                <button type="button" className="card-info promo-select-btn" onClick={() => selectPromo(p.id)}>
-                  <strong>{p.name}</strong>
-                  <span className="muted">{p.students_count} élève{p.students_count > 1 ? "s" : ""}</span>
-                </button>
-                <div className="card-actions">
-                  <button type="button" className="btn ghost small danger" onClick={() => removePromo(p)}>
-                    Supprimer
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {selectedPromo && (
-        <section className="panel">
-          <div className="page-head" style={{ marginBottom: 14 }}>
-            {renaming ? (
-              <form className="student-form" onSubmit={saveRename}>
-                <input value={renameValue} onChange={(e) => setRenameValue(e.target.value)} autoFocus />
-                <button type="submit" className="btn primary small">Enregistrer</button>
-                <button type="button" className="btn ghost small" onClick={() => setRenaming(false)}>Annuler</button>
-              </form>
-            ) : (
-              <h2 style={{ margin: 0 }}>
-                {selectedPromo.name}{" "}
-                <button type="button" className="btn ghost small" onClick={startRename}>Renommer</button>
-              </h2>
+          <section className="block">
+            <h2 className="block-title">Promos <span className="count">{promos?.length ?? 0}</span></h2>
+            {promos === null && <Loading />}
+            {promos?.length === 0 && <p className="muted">Aucune promo pour l'instant.</p>}
+            {promos?.length > 0 && (
+              <ul className="select-list">
+                {promos.map((p) => (
+                  <li key={p.id} className={`select-row${selectedId === p.id ? " selected" : ""}`}>
+                    <button
+                      type="button"
+                      className="select-row-main"
+                      aria-current={selectedId === p.id ? "true" : undefined}
+                      onClick={() => selectPromo(p.id)}
+                    >
+                      <span className="row-mark" aria-hidden="true"><Icon name="cap" size={16} /></span>
+                      <span className="cell-stack">
+                        <strong>{p.name}</strong>
+                        <span className="muted cell-meta">{p.students_count} élève{p.students_count > 1 ? "s" : ""}</span>
+                      </span>
+                    </button>
+                    <button type="button" className="btn text small danger" onClick={() => removePromo(p)}>
+                      <Icon name="trash" />
+                      Supprimer
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
-          </div>
-          <PromoStudents promo={selectedPromo} onChange={refreshSelected} />
-        </section>
-      )}
+          </section>
+        </div>
+
+        {selectedPromo && (
+          <section className="admin-detail">
+            <div className="admin-detail-head">
+              {renaming ? (
+                <form className="student-form" onSubmit={saveRename}>
+                  <input value={renameValue} onChange={(e) => setRenameValue(e.target.value)} aria-label="Nom de la promo" autoFocus />
+                  <button type="submit" className="btn primary small">Enregistrer</button>
+                  <button type="button" className="btn ghost small" onClick={() => setRenaming(false)}>Annuler</button>
+                </form>
+              ) : (
+                <>
+                  <h2 className="block-title">{selectedPromo.name}</h2>
+                  <button type="button" className="btn ghost small" onClick={startRename}>
+                    <Icon name="pencil" />
+                    Renommer
+                  </button>
+                </>
+              )}
+            </div>
+            <PromoStudents promo={selectedPromo} onChange={refreshSelected} />
+          </section>
+        )}
+      </div>
     </main>
   );
 }
