@@ -1,63 +1,60 @@
-# Grilles de notation
+# YGrille
 
-Application d'évaluation par compétences : grilles de critères pondérés,
-5 niveaux d'acquisition, note automatique /20, exports PDF et CSV (Hyperplanning).
+YGrille évalue les compétences. L'application gère des grilles de critères pondérés, 5 niveaux d'acquisition, le calcul de la note sur 20, les bilans PDF et les exports CSV Pronote.
 
-## Stack
+---
 
-| Couche      | Techno                                                          |
-|-------------|-----------------------------------------------------------------|
-| Client      | React 18 + Vite + React Router                                  |
-| Serveur     | Node.js + Express                                               |
-| Base        | SQLite hébergé sur Turso (`@libsql/client`)                     |
-| Auth        | JWT (Bearer token, `jsonwebtoken`)                              |
-| Hébergement | Vercel : client en statique, API Express en fonction serverless |
+## Documentation Complète
 
-## Arborescence
+Consultez la documentation technique dans [`docs/`](./docs/README.md) :
 
-```
+* **[Architecture Technique](./docs/architecture.md)** : Monorepo, flux applicatifs, calcul des notes (`grade.js`), génération PDF et sécurité.
+
+* **[Modèle de Données & SQLite (Turso)](./docs/database.md)** : Schéma relationnel, diagramme ERD, index, contraintes et CLI.
+
+* **[Spécification de l'API REST](./docs/api.md)** : Endpoints d'authentification, gestion des grilles, élèves, groupes, notes et administration.
+
+* **[Guide de Déploiement & Exploitation](./docs/deployment.md)** : Variables d'environnement, développement local, Vercel, Docker et Electron.
+
+---
+
+## Stack Technique
+
+| Couche | Technologie | Rôle |
+| --- | --- | --- |
+| **Client** | React 18 + Vite + React Router | Single Page Application, Vanilla CSS, génération PDF/ZIP côté client |
+| **Serveur** | Node.js + Express (ESM) | API REST modulaire (contrôleurs, services, validation) |
+| **Base de données** | SQLite hébergé sur Turso (`@libsql/client`) | Fichier local en dev, cluster cloud HTTP en production |
+| **Authentification** | JWT + bcrypt + OTP E-mail | Validation stricte `@ynov.com`, conformité CNIL, Resend |
+| **Hébergement** | Vercel | Client statique sur CDN + API Express en fonction serverless |
+| **Desktop** | Electron + electron-builder | Application de bureau avec serveur Express autonome intégré |
+
+---
+
+## Arborescence du Projet
+
+```text
 YGrille/
-├── vercel.json                # build du client, /api/* → fonction, région dub1 (Dublin)
-├── api/index.mjs              # point d'entrée Vercel : exporte l'app Express
-├── docker-compose.yml         # alternative auto-hébergée : front (nginx) + back
-├── package.json               # workspaces npm + script `npm run dev`
-├── client/                    # Front (Vite + React)
-│   ├── Dockerfile             # build Vite → nginx (proxy /api → back)
-│   ├── nginx.conf
-│   ├── vite.config.js         # proxy /api → http://localhost:3001 (dev)
-│   └── src/
-│       ├── main.jsx           # point d'entrée
-│       ├── App.jsx            # routing
-│       ├── auth/              # AuthContext (token JWT) + écran de connexion
-│       ├── api/               # client HTTP (fetch) par ressource
-│       ├── styles/            # CSS global
-│       └── features/
-│           ├── admin/         # panneau admin (promos)
-│           └── grids/         # module « grilles »
-│               ├── pages/       # écrans (liste, création…)
-│               ├── components/  # éditeurs de critères / niveaux
-│               └── defaults.js  # niveaux d'acquisition par défaut
-└── server/                    # API (Express)
-    ├── Dockerfile
-    └── src/
-        ├── index.js           # démarrage HTTP (dev, Docker, Electron)
-        ├── app.js             # instance Express + middlewares + routes
-        ├── auth/
-        │   ├── jwt.js         # signature/vérification des tokens
-        │   └── authValidate.js
-        ├── db/
-        │   ├── connection.js  # client libSQL (Turso ou fichier local) + all/get/run/batch
-        │   ├── init.js        # `npm run db:init -w server` : applique le schéma
-        │   └── schema.sql     # schéma complet
-        ├── routes/            # déclaration des endpoints
-        ├── controllers/       # HTTP ⇄ services (parsing, statuts, erreurs)
-        ├── services/          # logique métier + accès base
-        └── utils/             # validation, erreurs applicatives
+├── docs/                      # Documentation technique complète
+├── vercel.json                # Routage Vercel, build client, région dub1
+├── api/index.mjs              # Point d'entrée Vercel (fonction serverless Express)
+├── docker-compose.yml         # Déploiement auto-hébergé multi-conteneurs
+├── package.json               # Workspaces npm + scripts globaux
+├── client/                    # Frontend (React 18 + Vite)
+│   ├── Dockerfile             # Build Vite → Nginx
+│   ├── vite.config.js         # Proxy de développement /api → http://localhost:3001
+│   └── src/                   # Code source SPA (pages, composants, grade.js, pdf.js)
+├── server/                    # Backend API (Node.js + Express)
+│   ├── Dockerfile             # Conteneur Node.js
+│   └── src/                   # API REST, contrôleurs, services, DB et auth
+└── electron/                  # Intégration desktop Electron
+    ├── main.js                # Processus principal (Express local + Chromium)
+    └── config.example.js      # Exemple de configuration des clés desktop
 ```
 
 ## Modèle de données
 
-```
+```text
 users                    (id, email, password_hash, name, role, email_verified_at, created_at, last_login_at)
 email_verification_codes (user_id, code_hash, expires_at, attempts, created_at)
 grids                    (id, user_id, name, created_at)
@@ -81,16 +78,11 @@ cp server/.env.example server/.env   # renseigner au moins JWT_SECRET
 npm run dev
 ```
 
-Front sur http://localhost:5173, API sur http://localhost:3001. Sans
-`TURSO_DATABASE_URL`, la base est un fichier SQLite local (`server/data/ygrille.db`),
-créé et initialisé au démarrage. Sans `RESEND_API_KEY`, le code de vérification
-envoyé à l'inscription s'affiche dans la console du serveur.
+Le client écoute sur [http://localhost:5173](http://localhost:5173) et l'API sur [http://localhost:3001](http://localhost:3001). Sans `TURSO_DATABASE_URL`, le serveur crée un fichier SQLite local (`server/data/ygrille.db`). Sans `RESEND_API_KEY`, le terminal affiche le code de vérification.
 
 ### Base Turso (production)
 
-Base `ygrille` (organisation Turso `ynov624`, région `aws-eu-west-1`). Le schéma
-s'applique à la main, une fois à la création puis après chaque modification de
-`schema.sql` (les fonctions Vercel ne le rejouent pas à chaque démarrage) :
+La base `ygrille` est sur Turso (`ynov624`, région `aws-eu-west-1`). Appliquez le schéma manuellement à la création et après chaque modification de `schema.sql` :
 
 ```bash
 TURSO_DATABASE_URL=$(turso db show ygrille --url) \
@@ -100,24 +92,19 @@ npm run db:init -w server
 
 ### Vercel
 
-Le projet Vercel pointe sur la racine du dépôt ; `vercel.json` définit l'installation,
-le build du client, la redirection de `/api/*` vers la fonction Express et la région.
-Variables d'environnement à définir sur le projet :
+Le projet Vercel pointe sur la racine. Le fichier `vercel.json` définit l'installation, le build, la redirection `/api/*` et la région. Définissez ces variables d'environnement :
 
-| Variable             | Rôle                                                        |
-|----------------------|-------------------------------------------------------------|
-| `TURSO_DATABASE_URL` | `libsql://ygrille-ynov624.aws-eu-west-1.turso.io`           |
-| `TURSO_AUTH_TOKEN`   | `turso db tokens create ygrille`                            |
-| `JWT_SECRET`         | secret aléatoire (changer = déconnecter tout le monde)      |
-| `RESEND_API_KEY`     | envoi du code de vérification à l'inscription               |
-| `MAIL_FROM`          | expéditeur, sur un domaine vérifié chez Resend              |
+| Variable | Rôle |
+| --- | --- |
+| `TURSO_DATABASE_URL` | `libsql://ygrille-ynov624.aws-eu-west-1.turso.io` |
+| `TURSO_AUTH_TOKEN` | `turso db tokens create ygrille` |
+| `JWT_SECRET` | secret aléatoire (changer = déconnecter tout le monde) |
+| `RESEND_API_KEY` | envoi du code de vérification à l'inscription |
+| `MAIL_FROM` | expéditeur, sur un domaine vérifié chez Resend |
 
 ### Administrateurs
 
-Le panneau admin (promos, rôles) est réservé aux comptes de rôle `admin` ; le rôle est
-relu en base à chaque requête, donc un retrait de droits est immédiat. Les admins en
-nomment d'autres depuis l'onglet « Utilisateurs » du panneau. Le premier se nomme en
-ligne de commande, sur un compte déjà inscrit (même ciblage de base que `db:init`) :
+Le rôle `admin` donne accès au panneau d'administration. Le serveur vérifie ce rôle en base à chaque requête. Les administrateurs nomment d'autres administrateurs via l'interface. Nommez le premier administrateur en ligne de commande :
 
 ```bash
 TURSO_DATABASE_URL=$(turso db show ygrille --url) \
@@ -132,30 +119,52 @@ cp .env.example .env   # variables Turso, JWT_SECRET, Resend
 docker compose up --build
 ```
 
-Front sur http://localhost.
+Le client écoute sur [http://localhost](http://localhost).
 
 ## Feuille de route
 
-- [x] Création de grille (nom, critères pondérés, 5 niveaux + barème %)
-- [x] Édition / suppression de grille
-- [x] Gestion des étudiants (manuel + Import CSV)
-- [x] Saisie des évaluations (vue groupe + vue individuelle)
-- [x] Note /20 automatique + appréciation
-- [x] Note par catégorie + refonte de la section catégorie pour que ce soit plus simple d'assigner les critères aux catégories + ajout de la pondération (addition de tout les criteres dans chaque catégorie et ponderation sur chaque critère)
-- [x] La pondération dépend de la note de la catégorie pas de la note final
-- [x] Point donné pour chaque critère (pondération) avec appréciations pour chaque critère.
-- [x] Export PDF (par étudiant / tous)
-- [x] PDF qui a exactement la forme de la grille avec le design comme sur le site en format paysage
-- [x] Export CSV des notes (Hyperplanning)
-- [x] Aperçu de la grille vierge dans la création de la grille. Possibilité d'export de la grille vierge.
-- [x] Travail sur l'UI/UX
-- [x] Auth (e-mail + mot de passe, restreint à @ynov.com)
-- [ ] White mode
-- [x] Bouton pour dupliquer une grille
-- [x] Faire un service d'auth avec les tokens JWT et les grilles doivent dépendre des users
-- [x] Mettre le password norme CNIL
-- [x] Verification mail lors de l'inscription (envoie de mail + verification avec code)
-- [x] Le focus des champs ne marche plus a certain moment on ne sait pas pourquoi.
-- [x] Migration MySQL (Clever Cloud) → Turso et déploiement web sur Vercel, accessible depuis YOutils
-- [x] Rôles (utilisateur / admin) en base à la place du mot de passe admin partagé
-- [ ] Mettre le tout en application éléctron fonctionnel avec un .exe qui installe l'appli sur la machine. Pas de demande admin pour installer ni de mode developpeur c'est pour des personnes qui ne peuvent pas changer les droits ni les options. (rendu en grande partie inutile par la version web)
+* [x] Création de grille (nom, critères pondérés, 5 niveaux + barème %)
+
+* [x] Édition et suppression de grille
+
+* [x] Gestion des étudiants (manuel et import CSV)
+
+* [x] Saisie des évaluations (groupe et individuel)
+
+* [x] Note /20 automatique et appréciation
+
+* [x] Note par catégorie, refonte de l'assignation des critères et pondération
+
+* [x] La pondération dépend de la note de la catégorie
+
+* [x] Points par critère avec appréciations
+
+* [x] Export PDF (individuel ou global)
+
+* [x] PDF fidèle au design web en format paysage
+
+* [x] Export CSV des notes (Pronote)
+
+* [x] Aperçu et export de grille vierge
+
+* [x] Amélioration UI/UX
+
+* [x] Authentification (e-mail et mot de passe, restreint à @ynov.com)
+
+* [ ] Mode clair
+
+* [x] Duplication de grille
+
+* [x] Service d'authentification JWT et isolation des grilles par utilisateur
+
+* [x] Mot de passe norme CNIL
+
+* [x] Vérification d'e-mail avec code OTP
+
+* [x] Correction du bug de focus des champs
+
+* [x] Migration SQLite sur Turso et déploiement Vercel
+
+* [x] Rôles en base de données
+
+* [ ] Application Electron sans droits administrateur (obsolète suite à la version web)
