@@ -113,15 +113,15 @@ YGrille évalue les compétences avec des pondérations par catégories.
 
 1. **Niveaux d'acquisition** : Chaque grille possède 5 niveaux (positions `0` à `4`) avec un pourcentage (0 à 100%) :
 
-   * Position 0 : *Non acquis* (0%)
+   * Position 0 : *Non évaluable* (0%)
 
-   * Position 1 : *En cours d'acquisition* (25%)
+   * Position 1 : *Non acquis* (25%)
 
-   * Position 2 : *Acquis* (50%)
+   * Position 2 : *En cours d'acquisition* (50%)
 
-   * Position 3 : *Maîtrisé* (75%)
+   * Position 3 : *Acquis* (75%)
 
-   * Position 4 : *Dépassé* (100%)
+   * Position 4 : *Maîtrisé* (100%)
 
 2. **Points d'un critère** : Le système calcule les points selon le poids et le niveau :
 
@@ -197,7 +197,7 @@ Le navigateur génère les PDF, ZIP, CSV et JSON. Cela soulage le serveur et év
 
    * Envoie un code à 6 chiffres.
 
-   * Stocke le hash SHA-256 (valide 15 minutes).
+   * Stocke le hash bcrypt (valide 15 minutes, 5 tentatives maximum).
 
 4. **Jetons JWT** :
 

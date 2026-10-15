@@ -10,9 +10,9 @@ function csvEscape(value) {
 
 /**
  * Exporte la note finale de chaque élève en CSV (Nom;Prénom;Note), pour import dans
- * Hyperplanning. Séparateur point-virgule et décimales en virgule (mêmes conventions
+ * Pronote. Séparateur point-virgule et décimales en virgule (mêmes conventions
  * que le reste de l'app, cf. `formatGrade`) : c'est ce qu'attend Excel en France, l'outil
- * généralement utilisé pour préparer un import Hyperplanning.
+ * généralement utilisé pour préparer un import Pronote.
  */
 export function exportGradesCsv(grid, students, getMarkFor) {
   const header = ["Nom", "Prénom", "Note"];

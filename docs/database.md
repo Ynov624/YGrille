@@ -156,9 +156,11 @@ Codes numériques temporaires.
 
 * `user_id` : `TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE`.
 
-* `code_hash` : `TEXT NOT NULL`.
+* `code_hash` : `TEXT NOT NULL` (hash bcrypt du code à 6 chiffres).
 
 * `expires_at` : `DATETIME NOT NULL` (15 minutes).
+
+* `attempts` : `INTEGER NOT NULL DEFAULT 0` (5 tentatives max).
 
 ### 3.3. `grids`
 
