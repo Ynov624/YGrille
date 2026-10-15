@@ -308,13 +308,12 @@ Supprime la grille. La base supprime les éléments rattachés en cascade.
 * **Corps de la requête** :
 
 ```json
-[
-  { "lastName": "Durand", "firstName": "Sophie" },
-  { "lastName": "Petit", "firstName": "Thomas" }
-]
+{
+  "csv": "Nom;Prénom\nDurand;Sophie\nPetit;Thomas"
+}
 ```
 
-* **Réponse (201 Created)** : Liste complète des élèves.
+* **Réponse (201 Created)** : Liste complète des élèves de la grille après import.
 
 ### 4.4. Import depuis une promotion
 
@@ -507,7 +506,7 @@ Renvoie les promotions disponibles.
 
 * `POST /api/admin/promos/:id/students` : Ajouter un élève (`{ "lastName": "...", "firstName": "..." }`).
 
-* `POST /api/admin/promos/:id/students/import` : Import CSV d'élèves dans la promo.
+* `POST /api/admin/promos/:id/students/import` : Import CSV d'élèves dans la promo (`{ "csv": "..." }`).
 
 * `PATCH /api/admin/promos/:id/students/:studentId` : Modifier un élève de promo.
 
