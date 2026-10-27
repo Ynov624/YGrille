@@ -278,6 +278,7 @@
 .eval-grade-value { font-family: var(--font-display); font-size: 56px; font-weight: 700; line-height: 1; letter-spacing: -.045em; color: var(--ink); font-variant-numeric: tabular-nums; }
 .eval-grade-max { font-family: var(--font-display); font-size: 20px; font-weight: 500; color: var(--muted); }
 .eval-grade-comment { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.eval-grade-comment > .warn-box { margin: 0; font-size: 13px; padding: 9px 12px; }
 .eval-grade-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 @media (max-width: 1100px) {
