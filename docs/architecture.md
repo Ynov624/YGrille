@@ -107,7 +107,7 @@ YGrille/
 
 ## 3. Moteur de calcul des notes (`grade.js`)
 
-YGrille évalue les compétences avec des pondérations par catégories.
+YGrille calcule les notes par accumulation des points des critères.
 
 ### 3.1. Concepts de base
 
@@ -127,15 +127,15 @@ YGrille évalue les compétences avec des pondérations par catégories.
 
 $$\text{Points} = \text{weight} \times \frac{\text{pct}(level)}{100}$$
 
-3. **Note de catégorie (/20)** : Les critères ont un poids relatif uniquement dans leur catégorie.
+3. **Score de catégorie** : Chaque catégorie totalise les points obtenus sur ses critères évalués rapportés au total des points de la catégorie :
 
-$$\text{Note Catégorie (/20)} = \frac{\sum_{c \in \text{évalués}} (\text{weight}_c \times \text{pct}_c)}{\sum_{c \in \text{évalués}} \text{weight}_c} \times 0.2$$
+$$\text{Points Catégorie} = \sum_{c \in \text{cat, évalués}} \text{Points}_c \quad \text{sur} \quad \sum_{c \in \text{cat}} \text{weight}_c$$
 
-4. **Note finale (/20)** : Chaque catégorie a le même poids. La note finale est la moyenne des catégories évaluées :
+4. **Note finale (/20)** : La note finale est la somme globale des points des critères. Si le total des points de la grille vaut 20, la note est directement cette somme. Si le barème totalise un autre nombre de points, elle est ramenée proportionnellement sur 20 :
 
-$$\text{Note Finale (/20)} = \frac{\sum_{k=1}^{N_{cat}} \text{Note Catégorie } k}{N_{cat}}$$
+$$\text{Note Finale (/20)} = \frac{\sum_{c \in \text{évalués}} \text{Points}_c}{\sum_{c \in \text{grille}} \text{weight}_c} \times 20$$
 
-> **Tolérance** : Le système exclut les critères non évalués. La note évolue en temps réel sans pénaliser l'élève.
+> **Évaluation progressive** : Les critères non encore évalués n'apportent aucun point mais leur poids reste compté dans le total. La note augmente progressivement au fur et à mesure de l'évaluation (avec mention d'évaluation partielle tant que tous les critères ne sont pas renseignés).
 
 ### 3.2. Appréciations automatiques
 
