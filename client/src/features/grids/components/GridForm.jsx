@@ -90,9 +90,8 @@ export default function GridForm({ title, subtitle, submitLabel, initial, saving
             <span className="section-index" aria-hidden="true">03</span>
             <h2 className="section-title">Catégories et critères</h2>
             <p className="hint">
-              La note finale est la moyenne des notes de catégorie (chaque catégorie compte pour un
-              poids égal). Dans une catégorie, le nombre de points d'un critère ne joue que face aux
-              autres critères de cette même catégorie.
+              Chaque note de catégorie est la somme des points de ses critères. La note finale est
+              la somme globale des points, ramenée sur 20.
             </p>
           </div>
           <div className="section-body">

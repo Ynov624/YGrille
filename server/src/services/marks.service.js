@@ -29,6 +29,14 @@ export async function setMark(gridId, userId, studentId, criterionId, payload) {
   const criterion = await get("SELECT id FROM criteria WHERE id = ? AND grid_id = ?", [criterionId, gridId]);
   if (!criterion) throw notFound("Critère introuvable dans cette grille.");
 
+  if (payload.levelPosition === null) {
+    await run(
+      "DELETE FROM marks WHERE student_id = ? AND criterion_id = ?",
+      [studentId, criterionId]
+    );
+    return { studentId, criterionId, levelPosition: null, comment: "" };
+  }
+
   const current = await get(
     "SELECT level_position, comment FROM marks WHERE student_id = ? AND criterion_id = ?",
     [studentId, criterionId]
@@ -47,7 +55,7 @@ export async function setMark(gridId, userId, studentId, criterionId, payload) {
   return { studentId, criterionId, levelPosition, comment };
 }
 
-/** Applique le même niveau à tous les membres d'un groupe pour un critère donné. */
+/** Applique le même niveau à tous les membres d'un groupe pour un critère donné (ou désélectionne si null). */
 export async function setGroupMark(gridId, userId, groupId, criterionId, levelPosition) {
   await assertGridExists(gridId, userId);
   const group = await get("SELECT id FROM `groups` WHERE id = ? AND grid_id = ?", [groupId, gridId]);
@@ -56,6 +64,17 @@ export async function setGroupMark(gridId, userId, groupId, criterionId, levelPo
   if (!criterion) throw notFound("Critère introuvable dans cette grille.");
 
   const members = await all("SELECT id FROM students WHERE group_id = ?", [groupId]);
+
+  if (levelPosition === null) {
+    await batch(
+      members.map((m) => ({
+        sql: "DELETE FROM marks WHERE student_id = ? AND criterion_id = ?",
+        args: [m.id, criterionId],
+      }))
+    );
+    return { groupId, criterionId, levelPosition: null, studentIds: members.map((m) => m.id) };
+  }
+
   await batch(
     members.map((m) => ({
       sql: `INSERT INTO marks (student_id, criterion_id, level_position) VALUES (?, ?, ?)

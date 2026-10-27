@@ -106,11 +106,14 @@ export function validateRolePayload(body) {
   return { role };
 }
 
-/** Valide le payload de saisie d'une note de groupe : { levelPosition } (entier 0..4). */
+/** Valide le payload de saisie d'une note de groupe : { levelPosition } (entier 0..4 ou null pour désélectionner). */
 export function validateGroupMarkPayload(body) {
+  if (body?.levelPosition === null) {
+    return { levelPosition: null };
+  }
   const levelPosition = Number(body?.levelPosition);
   if (!Number.isInteger(levelPosition) || levelPosition < 0 || levelPosition > 4) {
-    throw badRequest("Note invalide.", ["Le niveau doit être un entier entre 0 et 4."]);
+    throw badRequest("Note invalide.", ["Le niveau doit être un entier entre 0 et 4 ou null."]);
   }
   return { levelPosition };
 }
@@ -120,18 +123,23 @@ export function validateGroupMarkPayload(body) {
  * { levelPosition?, comment? }. Au moins un champ doit être fourni ; les champs
  * absents conservent leur valeur existante (cf. marks.service.js). Les points
  * ne se saisissent pas : ils sont dérivés automatiquement du niveau (poids ×
- * barème du niveau), comme la note de catégorie.
+ * barème du niveau), comme la note de catégorie. levelPosition peut valoir null
+ * pour désélectionner le critère.
  */
 export function validateMarkPayload(body) {
   const errors = [];
   const result = {};
 
   if (body?.levelPosition !== undefined) {
-    const levelPosition = Number(body.levelPosition);
-    if (!Number.isInteger(levelPosition) || levelPosition < 0 || levelPosition > 4) {
-      errors.push("Le niveau doit être un entier entre 0 et 4.");
+    if (body.levelPosition === null) {
+      result.levelPosition = null;
     } else {
-      result.levelPosition = levelPosition;
+      const levelPosition = Number(body.levelPosition);
+      if (!Number.isInteger(levelPosition) || levelPosition < 0 || levelPosition > 4) {
+        errors.push("Le niveau doit être un entier entre 0 et 4 ou null.");
+      } else {
+        result.levelPosition = levelPosition;
+      }
     }
   }
 

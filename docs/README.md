@@ -6,7 +6,7 @@
 
 * **Vue d'ensemble** : Monorepo avec npm workspaces, frontend, backend et serverless.
 * **Architecture** : Interactions entre client SPA, API Express, base Turso et service Resend.
-* **Calcul des notes (`grade.js`)** : Barème en 5 niveaux, pondération par catégorie, moyenne sur 20 et appréciations automatiques.
+* **Calcul des notes (`grade.js`)** : Barème en 5 niveaux, somme des points des critères, note sur 20 et appréciations automatiques.
 * **Génération de documents** : Bilans PDF (`jspdf`), compression ZIP (`jszip`), exports CSV (Pronote/Excel) et transfert JSON.
 * **Sécurité** : Restriction de domaine (`@ynov.com`), mots de passe conformes CNIL et double vérification par e-mail.
 

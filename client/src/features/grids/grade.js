@@ -1,15 +1,11 @@
 /**
- * Note finale = moyenne des notes de catégorie (chaque catégorie compte pour un poids égal),
- * chaque note de catégorie étant la moyenne pondérée des critères évalués de cette catégorie
- * (ramenée sur 20 en interne pour ce calcul). Le poids d'un critère ne joue donc que face aux
- * autres critères de sa propre catégorie, pas directement sur la note finale.
- * Pour l'affichage, la note de catégorie montrée à l'utilisateur n'est PAS ramenée sur 20 :
- * on affiche `earnedPoints` (somme des points obtenus) sur `totalWeight` (somme des poids de
- * tous les critères de la catégorie, évalués ou non) - cf. `earnedPoints`/`totalWeight` renvoyés
- * par `computeCategoryGrades`.
+ * Note finale = somme des points obtenus sur les critères de la grille (ramenée sur 20
+ * si le total des points de la grille est différent de 20).
+ * Chaque note de catégorie est la somme des points de ses critères évalués (`earnedPoints`),
+ * affichée rapportée au total des points de la catégorie (`totalWeight`).
  * `getMark(criterionId)` doit renvoyer le level_position (0..4) ou null/undefined si le critère
- * n'a pas encore été évalué ; les critères non évalués sont exclus du calcul de `grade20` (note
- * partielle) mais leur poids reste compté dans `totalWeight`.
+ * n'a pas encore été évalué ; les critères non évalués n'apportent aucun point mais
+ * leur poids reste compté dans `totalWeight` (évaluation progressive).
  */
 function levelPctMap(levels) {
   const map = {};
@@ -72,12 +68,11 @@ export function computeCategoryGrades(grid, getMark) {
 
 export function computeGrade(grid, getMark) {
   const overall = gradeForCriteria(grid.criteria, levelPctMap(grid.levels), getMark);
+  const totalWeight = overall.totalWeight;
+  const earned = overall.earnedPoints;
 
-  const categoryGrades = computeCategoryGrades(grid, getMark)
-    .map((g) => g.grade20)
-    .filter((g) => g !== null);
-  const grade20 = categoryGrades.length > 0
-    ? categoryGrades.reduce((s, g) => s + g, 0) / categoryGrades.length
+  const grade20 = overall.evaluatedCount > 0 && totalWeight > 0
+    ? (totalWeight === 20 ? earned : (earned / totalWeight) * 20)
     : null;
 
   return { grade20, evaluatedCount: overall.evaluatedCount, totalCount: overall.totalCount, complete: overall.complete };

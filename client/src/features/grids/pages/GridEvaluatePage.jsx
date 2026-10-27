@@ -484,6 +484,18 @@ export default function GridEvaluatePage() {
                             onChange={(e) => setComment(e.target.value)}
                           />
                         </label>
+                        {!grade.complete && (
+                          <output className="warn-box">
+                            <Icon name="alert" />
+                            <span>
+                              Évaluation incomplète : {grade.totalCount - grade.evaluatedCount} critère
+                              {grade.totalCount - grade.evaluatedCount > 1 ? "s" : ""} sur {grade.totalCount}{" "}
+                              {grade.totalCount - grade.evaluatedCount > 1 ? "n'ont" : "n'a"} pas encore été noté
+                              {grade.totalCount - grade.evaluatedCount > 1 ? "s" : ""}
+                              {grade.evaluatedCount > 0 ? ` (note provisoire : ${formatGrade(grade.grade20)} / 20)` : ""}.
+                            </span>
+                          </output>
+                        )}
                         <div className="eval-grade-actions">
                           <button
                             type="button"
