@@ -243,11 +243,21 @@ input, select, textarea, button { font: inherit; color: inherit; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 1ms !important;
+  :root {
+    --dur-fast: 0.01ms;
+    --dur: 0.01ms;
+    --dur-slow: 0.01ms;
   }
-  .spinner { animation-duration: 1.6s !important; animation-iteration-count: infinite !important; }
+  html { scroll-behavior: auto; }
+  *:not(.spinner),
+  *:not(.spinner)::before,
+  *:not(.spinner)::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+  .spinner {
+    animation-duration: 1.6s;
+    animation-iteration-count: infinite;
+  }
 }
