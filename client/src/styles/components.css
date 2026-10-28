@@ -5,8 +5,9 @@
 .logo-mark { display: block; flex-shrink: 0; object-fit: contain; }
 /* Sur fond sombre, la partie marine du logo disparaît : pastille blanche derrière le pictogramme. */
 .auth-brand .logo-mark { padding: 4px; border-radius: var(--radius-sm); background: #FFFFFF; }
+:root[data-theme="dark"] .logo-mark { padding: 3px; border-radius: var(--radius-sm); background: #FFFFFF; }
 @media (prefers-color-scheme: dark) {
-  .logo-mark { padding: 3px; border-radius: var(--radius-sm); background: #FFFFFF; }
+  :root:not([data-theme="light"]) .logo-mark { padding: 3px; border-radius: var(--radius-sm); background: #FFFFFF; }
 }
 .logo-text { display: flex; flex-direction: column; gap: 3px; line-height: 1; }
 .logo-wordmark { font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: -.03em; color: var(--ink); }
@@ -232,6 +233,37 @@ select { appearance: none; -webkit-appearance: none; padding-right: 36px; cursor
 .segmented-item:hover { color: var(--ink); }
 .segmented-item.active { color: var(--ink); font-weight: 600; }
 .segmented-item:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* ── Sélecteur de thème ────────────────────────────────────────────────── */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  gap: 2px;
+}
+.theme-toggle-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 26px;
+  padding: 0;
+  border-radius: var(--radius-xs);
+  color: var(--muted);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.theme-toggle-btn:hover:not(.active) { color: var(--ink); background: var(--surface-hover); }
+.theme-toggle-btn.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-xs);
+}
+.theme-toggle-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 
 /* ── Tableaux ──────────────────────────────────────────────────────────── */
 .table-wrap { margin-left: -12px; margin-right: -12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }

@@ -71,8 +71,52 @@
   --gutter: 24px;
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0B1120;
+  --bg-sunken: #080D19;
+  --surface: #111827;
+  --surface-alt: #0F172A;
+  --surface-hover: #182132;
+
+  --ink: #F1F5F9;
+  --ink-2: #CBD5E1;
+  --muted: #94A3B8;
+  --subtle: #64748B;
+
+  --border: #1F2937;
+  --border-strong: #334155;
+  --hairline: rgba(241, 245, 249, .06);
+  --grid-line: rgba(241, 245, 249, .03);
+
+  --accent: #3B82F6;
+  --accent-hover: #60A5FA;
+  --accent-press: #2563EB;
+  --accent-ink: #93C5FD;
+  --accent-soft: rgba(59, 130, 246, .10);
+  --accent-soft-strong: rgba(59, 130, 246, .18);
+  --on-accent: #FFFFFF;
+  --violet: #A78BFA;
+  --violet-soft: rgba(167, 139, 250, .12);
+  --warn: #FB923C;
+  --warn-ink: #FDBA74;
+  --warn-soft: rgba(251, 146, 60, .12);
+  --success: #22C55E;
+  --success-ink: #86EFAC;
+  --danger: #F87171;
+  --danger-ink: #FCA5A5;
+  --danger-soft: rgba(248, 113, 113, .10);
+  --danger-border: rgba(248, 113, 113, .28);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .35), 0 2px 8px -2px rgba(0, 0, 0, .4);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, .3), 0 18px 40px -12px rgba(0, 0, 0, .6);
+  --focus-ring: 0 0 0 3px rgba(59, 130, 246, .35);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
     color-scheme: dark;
 
     --bg: #0B1120;
@@ -199,11 +243,21 @@ input, select, textarea, button { font: inherit; color: inherit; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 1ms !important;
+  :root {
+    --dur-fast: 0.01ms;
+    --dur: 0.01ms;
+    --dur-slow: 0.01ms;
   }
-  .spinner { animation-duration: 1.6s !important; animation-iteration-count: infinite !important; }
+  html { scroll-behavior: auto; }
+  *:not(.spinner),
+  *:not(.spinner)::before,
+  *:not(.spinner)::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+  .spinner {
+    animation-duration: 1.6s;
+    animation-iteration-count: infinite;
+  }
 }

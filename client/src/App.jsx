@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { Routes, Route, Link, NavLink, Navigate, useLocation } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Link,
+  NavLink,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import GridListPage from "./features/grids/pages/GridListPage.jsx";
 import GridCreatePage from "./features/grids/pages/GridCreatePage.jsx";
 import GridEditPage from "./features/grids/pages/GridEditPage.jsx";
@@ -11,6 +18,8 @@ import LoginPage from "./auth/LoginPage.jsx";
 import Loading from "./components/Loading.jsx";
 import Logo from "./components/Logo.jsx";
 import Icon from "./components/Icon.jsx";
+import ThemeToggle from "./components/ThemeToggle.jsx";
+import { ThemeProvider } from "./theme/ThemeContext.jsx";
 
 function initialsOf(user) {
   const source = (user.name || user.email || "").trim();
@@ -42,7 +51,8 @@ function AppShell() {
 
   if (!user) return <LoginPage />;
 
-  const gridsActive = location.pathname === "/" || location.pathname.startsWith("/grilles");
+  const gridsActive =
+    location.pathname === "/" || location.pathname.startsWith("/grilles");
   // Confort d'affichage seulement : l'API admin revérifie le rôle en base à chaque requête.
   const isAdmin = user.role === "admin";
 
@@ -51,7 +61,9 @@ function AppShell() {
       {/* RGAA 12.7 : premier élément focusable de la page, masqué visuellement sauf au
           focus clavier (voir .skip-link dans global.css). Cible un wrapper (pas <main>
           directement) car chaque page rend déjà son propre <main> — éviter l'imbrication. */}
-      <a href="#contenu" className="skip-link">Aller au contenu</a>
+      <a href="#contenu" className="skip-link">
+        Aller au contenu
+      </a>
 
       <header className="mobile-bar">
         <Link to="/" className="brand" aria-label="YGrid, accueil">
@@ -69,10 +81,18 @@ function AppShell() {
         </button>
       </header>
 
-      <div className={`sidebar-backdrop${navOpen ? " is-open" : ""}`} onClick={() => setNavOpen(false)} aria-hidden="true" />
+      <div
+        className={`sidebar-backdrop${navOpen ? " is-open" : ""}`}
+        onClick={() => setNavOpen(false)}
+        aria-hidden="true"
+      />
 
       <aside id="sidebar" className={`sidebar${navOpen ? " is-open" : ""}`}>
-        <Link to="/" className="brand sidebar-brand" aria-label="YGrid, accueil">
+        <Link
+          to="/"
+          className="brand sidebar-brand"
+          aria-label="YGrid, accueil"
+        >
           <Logo size={32} />
         </Link>
 
@@ -80,14 +100,23 @@ function AppShell() {
           <p className="sidebar-label">Espace</p>
           <ul>
             <li>
-              <NavLink to="/" className={gridsActive ? "nav-item active" : "nav-item"} aria-current={gridsActive ? "page" : undefined}>
+              <NavLink
+                to="/"
+                className={gridsActive ? "nav-item active" : "nav-item"}
+                aria-current={gridsActive ? "page" : undefined}
+              >
                 <Icon name="grid" size={18} />
                 <span>Mes grilles</span>
               </NavLink>
             </li>
             {isAdmin && (
               <li>
-                <NavLink to="/admin" className={({ isActive }) => `nav-item${isActive ? " active" : ""}`}>
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) =>
+                    `nav-item${isActive ? " active" : ""}`
+                  }
+                >
                   <Icon name="shield" size={18} />
                   <span>Admin</span>
                 </NavLink>
@@ -97,14 +126,29 @@ function AppShell() {
         </nav>
 
         <div className="sidebar-footer">
-          <span className="avatar" aria-hidden="true">{initialsOf(user)}</span>
-          <div className="sidebar-user">
-            <span className="sidebar-user-name">{user.name || user.email}</span>
-            {user.name && user.email && <span className="sidebar-user-mail">{user.email}</span>}
+          <ThemeToggle />
+          <div className="sidebar-user-row">
+            <span className="avatar" aria-hidden="true">
+              {initialsOf(user)}
+            </span>
+            <div className="sidebar-user">
+              <span className="sidebar-user-name">
+                {user.name || user.email}
+              </span>
+              {user.name && user.email && (
+                <span className="sidebar-user-mail">{user.email}</span>
+              )}
+            </div>
+            <button
+              type="button"
+              className="btn ghost icon-only"
+              onClick={logout}
+              aria-label="Déconnexion"
+              title="Déconnexion"
+            >
+              <Icon name="logout" size={17} />
+            </button>
           </div>
-          <button type="button" className="btn ghost icon-only" onClick={logout} aria-label="Déconnexion" title="Déconnexion">
-            <Icon name="logout" size={17} />
-          </button>
         </div>
       </aside>
 
@@ -115,7 +159,10 @@ function AppShell() {
           <Route path="/grilles/:id/modifier" element={<GridEditPage />} />
           <Route path="/grilles/:id/eleves" element={<GridStudentsPage />} />
           <Route path="/grilles/:id/evaluer" element={<GridEvaluatePage />} />
-          <Route path="/admin" element={isAdmin ? <AdminPage /> : <Navigate to="/" replace />} />
+          <Route
+            path="/admin"
+            element={isAdmin ? <AdminPage /> : <Navigate to="/" replace />}
+          />
         </Routes>
       </div>
     </div>
@@ -124,8 +171,10 @@ function AppShell() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppShell />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppShell />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
