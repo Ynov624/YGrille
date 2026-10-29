@@ -48,9 +48,7 @@ export default function LoginPage() {
     } catch (err) {
       if (err.code === "EMAIL_NOT_VERIFIED") {
         setMode("verify");
-        setInfo(
-          "Ton compte n'est pas encore vérifié. Un nouveau code a été envoyé.",
-        );
+        setInfo("Ton compte n'est pas encore vérifié. Un nouveau code a été envoyé.");
         resendCode(email).catch(() => {});
       } else {
         setErrors(err.details?.length ? err.details : [err.message]);
@@ -85,10 +83,7 @@ export default function LoginPage() {
         <Logo tone="light" size={36} />
         <div className="auth-brand-art">
           {Array.from({ length: 20 }, (_, i) => (
-            <span
-              key={i}
-              className={[6, 8, 12, 17].includes(i) ? "is-on" : undefined}
-            />
+            <span key={i} className={[6, 8, 12, 17].includes(i) ? "is-on" : undefined} />
           ))}
         </div>
         <p className="auth-brand-title">Grilles de notation</p>
@@ -146,15 +141,13 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
                     minLength={mode === "register" ? 12 : undefined}
-                    autoComplete={
-                      mode === "register" ? "new-password" : "current-password"
-                    }
+                    autoComplete={mode === "register" ? "new-password" : "current-password"}
                     required
                   />
                   {mode === "register" && (
                     <small className="hint">
-                      12 caractères minimum, avec majuscule, minuscule, chiffre
-                      et caractère spécial.
+                      12 caractères minimum, avec majuscule, minuscule, chiffre et caractère
+                      spécial.
                     </small>
                   )}
                 </label>
@@ -165,9 +158,7 @@ export default function LoginPage() {
                   <span>Code reçu par e-mail</span>
                   <input
                     value={code}
-                    onChange={(e) =>
-                      setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                    }
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     placeholder="123456"
                     inputMode="numeric"
                     autoComplete="one-time-code"
@@ -194,29 +185,17 @@ export default function LoginPage() {
               </div>
             )}
 
-            <button
-              type="submit"
-              className="btn primary block lg"
-              disabled={saving}
-            >
+            <button type="submit" className="btn primary block lg" disabled={saving}>
               {submitLabel}
             </button>
 
             <div className="auth-alt">
               {mode === "verify" ? (
                 <>
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    onClick={handleResend}
-                  >
+                  <button type="button" className="btn ghost" onClick={handleResend}>
                     Renvoyer le code
                   </button>
-                  <button
-                    type="button"
-                    className="btn text"
-                    onClick={cancelVerify}
-                  >
+                  <button type="button" className="btn text" onClick={cancelVerify}>
                     Annuler
                   </button>
                 </>

@@ -9,12 +9,7 @@ import {
   importStudentsCsv,
   importStudentsFromPromo,
 } from "../../../api/students.js";
-import {
-  fetchGroups,
-  createGroup,
-  deleteGroup,
-  setStudentGroup,
-} from "../../../api/groups.js";
+import { fetchGroups, createGroup, deleteGroup, setStudentGroup } from "../../../api/groups.js";
 import { fetchPromos } from "../../../api/promos.js";
 import Loading from "../../../components/Loading.jsx";
 import Icon from "../../../components/Icon.jsx";
@@ -48,10 +43,18 @@ export default function GridStudentsPage() {
   const [importingPromo, setImportingPromo] = useState(false);
 
   useEffect(() => {
-    fetchGrid(id).then(setGrid).catch((e) => setError(e.message));
-    fetchStudents(id).then(setStudents).catch((e) => setError(e.message));
-    fetchGroups(id).then(setGroups).catch((e) => setError(e.message));
-    fetchPromos().then(setPromos).catch(() => {});
+    fetchGrid(id)
+      .then(setGrid)
+      .catch((e) => setError(e.message));
+    fetchStudents(id)
+      .then(setStudents)
+      .catch((e) => setError(e.message));
+    fetchGroups(id)
+      .then(setGroups)
+      .catch((e) => setError(e.message));
+    fetchPromos()
+      .then(setPromos)
+      .catch(() => {});
   }, [id]);
 
   const showError = (e) => setError(e.details?.length ? e.details.join(" ") : e.message);
@@ -150,11 +153,14 @@ export default function GridStudentsPage() {
   };
 
   const removeGroup = async (group) => {
-    if (!window.confirm(`Supprimer le groupe « ${group.name} » ? Les élèves seront désassignés.`)) return;
+    if (!window.confirm(`Supprimer le groupe « ${group.name} » ? Les élèves seront désassignés.`))
+      return;
     try {
       await deleteGroup(id, group.id);
       setGroups((g) => g.filter((gr) => gr.id !== group.id));
-      setStudents((list) => list.map((s) => (s.group_id === group.id ? { ...s, group_id: null } : s)));
+      setStudents((list) =>
+        list.map((s) => (s.group_id === group.id ? { ...s, group_id: null } : s))
+      );
     } catch (err) {
       showError(err);
     }
@@ -173,10 +179,19 @@ export default function GridStudentsPage() {
   return (
     <main className="page">
       <PageHeader
-        breadcrumbs={[{ label: "Mes grilles", to: "/" }, { label: grid?.name ?? "…" }, { label: "Élèves" }]}
+        breadcrumbs={[
+          { label: "Mes grilles", to: "/" },
+          { label: grid?.name ?? "…" },
+          { label: "Élèves" },
+        ]}
         title={`Élèves${grid ? ` - ${grid.name}` : ""}`}
         subtitle="Ajoutez des élèves manuellement ou importez un export CSV."
-        actions={<Link to="/" className="btn ghost"><Icon name="arrowLeft" />Retour</Link>}
+        actions={
+          <Link to="/" className="btn ghost">
+            <Icon name="arrowLeft" />
+            Retour
+          </Link>
+        }
       />
 
       {error && (
@@ -188,7 +203,9 @@ export default function GridStudentsPage() {
 
       <section className="section">
         <div className="section-aside">
-          <span className="section-index" aria-hidden="true">01</span>
+          <span className="section-index" aria-hidden="true">
+            01
+          </span>
           <h2 className="section-title">Ajouter un élève</h2>
         </div>
         <div className="section-body">
@@ -216,11 +233,14 @@ export default function GridStudentsPage() {
 
       <section className="section">
         <div className="section-aside">
-          <span className="section-index" aria-hidden="true">02</span>
+          <span className="section-index" aria-hidden="true">
+            02
+          </span>
           <h2 className="section-title">Importer un CSV</h2>
           <p className="hint">
             Colonnes attendues : « Nom » (obligatoire) et « Prénom ». Séparateur virgule ou
-            point-virgule détecté automatiquement. Les élèves importés s'ajoutent à la liste existante.
+            point-virgule détecté automatiquement. Les élèves importés s'ajoutent à la liste
+            existante.
           </p>
         </div>
         <div className="section-body">
@@ -238,17 +258,28 @@ export default function GridStudentsPage() {
 
       <section className="section">
         <div className="section-aside">
-          <span className="section-index" aria-hidden="true">03</span>
+          <span className="section-index" aria-hidden="true">
+            03
+          </span>
           <h2 className="section-title">Importer une promo</h2>
-          {promos.length > 0 && <p className="hint">Ajoute les élèves de la promo sélectionnée à la liste existante.</p>}
+          {promos.length > 0 && (
+            <p className="hint">Ajoute les élèves de la promo sélectionnée à la liste existante.</p>
+          )}
         </div>
         <div className="section-body">
           {promos.length === 0 ? (
-            <p className="notice"><Icon name="info" />Aucune promo disponible. Un administrateur peut en ajouter depuis le panneau admin.</p>
+            <p className="notice">
+              <Icon name="info" />
+              Aucune promo disponible. Un administrateur peut en ajouter depuis le panneau admin.
+            </p>
           ) : (
             <div className="promo-import-row">
               <div className="select-wrap">
-                <select value={selectedPromoId} onChange={(e) => setSelectedPromoId(e.target.value)} aria-label="Promo">
+                <select
+                  value={selectedPromoId}
+                  onChange={(e) => setSelectedPromoId(e.target.value)}
+                  aria-label="Promo"
+                >
                   <option value="">Sélectionner une promo…</option>
                   {promos.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -274,10 +305,13 @@ export default function GridStudentsPage() {
 
       <section className="section">
         <div className="section-aside">
-          <span className="section-index" aria-hidden="true">04</span>
+          <span className="section-index" aria-hidden="true">
+            04
+          </span>
           <h2 className="section-title">Groupes</h2>
           <p className="hint">
-            Créez des groupes (ex. équipes de projet) pour pouvoir les évaluer d'un coup depuis la page Évaluer.
+            Créez des groupes (ex. équipes de projet) pour pouvoir les évaluer d'un coup depuis la
+            page Évaluer.
           </p>
         </div>
         <div className="section-body">
@@ -302,13 +336,21 @@ export default function GridStudentsPage() {
                   <li key={g.id} className="group-card">
                     <div className="group-card-head">
                       <div className="cell-title">
-                        <span className="row-mark" aria-hidden="true"><Icon name="users" size={16} /></span>
+                        <span className="row-mark" aria-hidden="true">
+                          <Icon name="users" size={16} />
+                        </span>
                         <div className="cell-stack">
                           <strong>{g.name}</strong>
-                          <span className="muted cell-meta">{memberCount} élève{memberCount > 1 ? "s" : ""}</span>
+                          <span className="muted cell-meta">
+                            {memberCount} élève{memberCount > 1 ? "s" : ""}
+                          </span>
                         </div>
                       </div>
-                      <button type="button" className="btn text small danger" onClick={() => removeGroup(g)}>
+                      <button
+                        type="button"
+                        className="btn text small danger"
+                        onClick={() => removeGroup(g)}
+                      >
                         <Icon name="trash" />
                         Supprimer
                       </button>
@@ -321,10 +363,16 @@ export default function GridStudentsPage() {
                             <input
                               type="checkbox"
                               checked={s.group_id === g.id}
-                              onChange={(e) => changeStudentGroup(s, e.target.checked ? g.id : null)}
+                              onChange={(e) =>
+                                changeStudentGroup(s, e.target.checked ? g.id : null)
+                              }
                             />
-                            <span className="check-box" aria-hidden="true"><Icon name="check" size={11} strokeWidth="3" /></span>
-                            <span className="check-label">{s.last_name} {s.first_name}</span>
+                            <span className="check-box" aria-hidden="true">
+                              <Icon name="check" size={11} strokeWidth="3" />
+                            </span>
+                            <span className="check-label">
+                              {s.last_name} {s.first_name}
+                            </span>
                           </label>
                         ))}
                       </fieldset>
@@ -340,8 +388,12 @@ export default function GridStudentsPage() {
       <section className="section section-stacked">
         <div className="section-head">
           <div>
-            <span className="section-index" aria-hidden="true">05</span>
-            <h2 className="section-title">Liste <span className="count">{students?.length ?? 0}</span></h2>
+            <span className="section-index" aria-hidden="true">
+              05
+            </span>
+            <h2 className="section-title">
+              Liste <span className="count">{students?.length ?? 0}</span>
+            </h2>
           </div>
         </div>
         {students === null && <Loading />}
@@ -354,7 +406,9 @@ export default function GridStudentsPage() {
                 <tr>
                   <th scope="col">Élève</th>
                   <th scope="col">Groupe</th>
-                  <th scope="col"><span className="sr-only">Actions</span></th>
+                  <th scope="col">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -364,20 +418,40 @@ export default function GridStudentsPage() {
                     <tr key={s.id} className="is-editing">
                       <td colSpan={2}>
                         <div className="student-form">
-                          <input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} placeholder="Nom" aria-label="Nom" />
-                          <input value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} placeholder="Prénom" aria-label="Prénom" />
+                          <input
+                            value={editLastName}
+                            onChange={(e) => setEditLastName(e.target.value)}
+                            placeholder="Nom"
+                            aria-label="Nom"
+                          />
+                          <input
+                            value={editFirstName}
+                            onChange={(e) => setEditFirstName(e.target.value)}
+                            placeholder="Prénom"
+                            aria-label="Prénom"
+                          />
                         </div>
                       </td>
                       <td className="actions">
                         <div className="row-actions">
-                          <button type="button" className="btn primary small" onClick={() => saveEdit(s)}>Enregistrer</button>
-                          <button type="button" className="btn ghost small" onClick={cancelEdit}>Annuler</button>
+                          <button
+                            type="button"
+                            className="btn primary small"
+                            onClick={() => saveEdit(s)}
+                          >
+                            Enregistrer
+                          </button>
+                          <button type="button" className="btn ghost small" onClick={cancelEdit}>
+                            Annuler
+                          </button>
                         </div>
                       </td>
                     </tr>
                   ) : (
                     <tr key={s.id}>
-                      <td><strong>{s.last_name}</strong> {s.first_name}</td>
+                      <td>
+                        <strong>{s.last_name}</strong> {s.first_name}
+                      </td>
                       <td>
                         <span className={`status${groupName ? "" : " is-muted"}`}>
                           <span className="status-dot" aria-hidden="true" />
@@ -386,11 +460,21 @@ export default function GridStudentsPage() {
                       </td>
                       <td className="actions">
                         <div className="row-actions">
-                          <button type="button" className="btn text small" onClick={() => startEdit(s)}>
-                            <Icon name="pencil" />Modifier
+                          <button
+                            type="button"
+                            className="btn text small"
+                            onClick={() => startEdit(s)}
+                          >
+                            <Icon name="pencil" />
+                            Modifier
                           </button>
-                          <button type="button" className="btn text small danger" onClick={() => removeStudent(s)}>
-                            <Icon name="trash" />Supprimer
+                          <button
+                            type="button"
+                            className="btn text small danger"
+                            onClick={() => removeStudent(s)}
+                          >
+                            <Icon name="trash" />
+                            Supprimer
                           </button>
                         </div>
                       </td>

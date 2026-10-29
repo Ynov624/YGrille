@@ -13,7 +13,9 @@ export default function GridEditPage() {
   const [errors, setErrors] = useState(null);
 
   useEffect(() => {
-    fetchGrid(id).then(setGrid).catch((e) => setLoadError(e.message));
+    fetchGrid(id)
+      .then(setGrid)
+      .catch((e) => setLoadError(e.message));
   }, [id]);
 
   const submit = async (payload) => {
@@ -28,8 +30,20 @@ export default function GridEditPage() {
     }
   };
 
-  if (loadError) return <main className="page"><p className="error-box" role="alert">{loadError}</p></main>;
-  if (!grid) return <main className="page"><Loading /></main>;
+  if (loadError)
+    return (
+      <main className="page">
+        <p className="error-box" role="alert">
+          {loadError}
+        </p>
+      </main>
+    );
+  if (!grid)
+    return (
+      <main className="page">
+        <Loading />
+      </main>
+    );
 
   return (
     <GridForm
@@ -42,8 +56,17 @@ export default function GridEditPage() {
       initial={{
         name: grid.name,
         levels: grid.levels.map((l) => ({ label: l.label, pct: l.pct })),
-        categories: grid.categories.map((c) => ({ id: c.id, name: c.name, deliverable: c.deliverable })),
-        criteria: grid.criteria.map((c) => ({ id: c.id, name: c.name, weight: c.weight, categoryId: c.category_id })),
+        categories: grid.categories.map((c) => ({
+          id: c.id,
+          name: c.name,
+          deliverable: c.deliverable,
+        })),
+        criteria: grid.criteria.map((c) => ({
+          id: c.id,
+          name: c.name,
+          weight: c.weight,
+          categoryId: c.category_id,
+        })),
       }}
     />
   );

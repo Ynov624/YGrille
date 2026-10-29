@@ -5,7 +5,9 @@ let client = null;
 function getClient() {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    throw new Error("RESEND_API_KEY manquant. Définis-le dans server/.env (voir server/.env.example).");
+    throw new Error(
+      "RESEND_API_KEY manquant. Définis-le dans server/.env (voir server/.env.example)."
+    );
   }
   if (!client) client = new Resend(apiKey);
   return client;

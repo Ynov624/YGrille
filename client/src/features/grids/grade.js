@@ -9,7 +9,9 @@
  */
 function levelPctMap(levels) {
   const map = {};
-  levels.forEach((l) => { map[l.position] = Number(l.pct) || 0; });
+  levels.forEach((l) => {
+    map[l.position] = Number(l.pct) || 0;
+  });
   return map;
 }
 
@@ -62,7 +64,11 @@ export function computeCategoryGrades(grid, getMark) {
   const levelPctByPosition = levelPctMap(grid.levels);
   return grid.categories.map((cat) => ({
     categoryId: cat.id,
-    ...gradeForCriteria(grid.criteria.filter((c) => c.category_id === cat.id), levelPctByPosition, getMark),
+    ...gradeForCriteria(
+      grid.criteria.filter((c) => c.category_id === cat.id),
+      levelPctByPosition,
+      getMark
+    ),
   }));
 }
 
@@ -71,11 +77,19 @@ export function computeGrade(grid, getMark) {
   const totalWeight = overall.totalWeight;
   const earned = overall.earnedPoints;
 
-  const grade20 = overall.evaluatedCount > 0 && totalWeight > 0
-    ? (totalWeight === 20 ? earned : (earned / totalWeight) * 20)
-    : null;
+  const grade20 =
+    overall.evaluatedCount > 0 && totalWeight > 0
+      ? totalWeight === 20
+        ? earned
+        : (earned / totalWeight) * 20
+      : null;
 
-  return { grade20, evaluatedCount: overall.evaluatedCount, totalCount: overall.totalCount, complete: overall.complete };
+  return {
+    grade20,
+    evaluatedCount: overall.evaluatedCount,
+    totalCount: overall.totalCount,
+    complete: overall.complete,
+  };
 }
 
 export function formatGrade(grade20) {

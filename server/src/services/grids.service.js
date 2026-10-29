@@ -15,13 +15,22 @@ export async function listGrids(userId) {
 }
 
 export async function getGrid(id, userId) {
-  const grid = await get("SELECT id, name, created_at FROM grids WHERE id = ? AND user_id = ?", [id, userId]);
+  const grid = await get("SELECT id, name, created_at FROM grids WHERE id = ? AND user_id = ?", [
+    id,
+    userId,
+  ]);
   if (!grid) throw notFound("Grille introuvable.");
   // Lectures indépendantes lancées en parallèle : chacune est un aller-retour HTTP vers Turso.
   const [levels, categories, criteria] = await Promise.all([
     all("SELECT id, position, label, pct FROM levels WHERE grid_id = ? ORDER BY position", [id]),
-    all("SELECT id, position, name, deliverable FROM categories WHERE grid_id = ? ORDER BY position", [id]),
-    all("SELECT id, category_id, position, name, weight FROM criteria WHERE grid_id = ? ORDER BY position", [id]),
+    all(
+      "SELECT id, position, name, deliverable FROM categories WHERE grid_id = ? ORDER BY position",
+      [id]
+    ),
+    all(
+      "SELECT id, category_id, position, name, weight FROM criteria WHERE grid_id = ? ORDER BY position",
+      [id]
+    ),
   ]);
   grid.levels = levels;
   grid.categories = categories;
@@ -54,7 +63,10 @@ function gridContentsStatements(gridId, payload) {
 export async function createGrid(userId, payload) {
   const gridId = randomUUID();
   await batch([
-    { sql: "INSERT INTO grids (id, user_id, name) VALUES (?, ?, ?)", args: [gridId, userId, payload.name] },
+    {
+      sql: "INSERT INTO grids (id, user_id, name) VALUES (?, ?, ?)",
+      args: [gridId, userId, payload.name],
+    },
     ...gridContentsStatements(gridId, payload),
   ]);
   return getGrid(gridId, userId);

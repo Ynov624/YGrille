@@ -24,16 +24,22 @@ export async function listMarks(gridId, userId) {
  */
 export async function setMark(gridId, userId, studentId, criterionId, payload) {
   await assertGridExists(gridId, userId);
-  const student = await get("SELECT id FROM students WHERE id = ? AND grid_id = ?", [studentId, gridId]);
+  const student = await get("SELECT id FROM students WHERE id = ? AND grid_id = ?", [
+    studentId,
+    gridId,
+  ]);
   if (!student) throw notFound("Élève introuvable dans cette grille.");
-  const criterion = await get("SELECT id FROM criteria WHERE id = ? AND grid_id = ?", [criterionId, gridId]);
+  const criterion = await get("SELECT id FROM criteria WHERE id = ? AND grid_id = ?", [
+    criterionId,
+    gridId,
+  ]);
   if (!criterion) throw notFound("Critère introuvable dans cette grille.");
 
   if (payload.levelPosition === null) {
-    await run(
-      "DELETE FROM marks WHERE student_id = ? AND criterion_id = ?",
-      [studentId, criterionId]
-    );
+    await run("DELETE FROM marks WHERE student_id = ? AND criterion_id = ?", [
+      studentId,
+      criterionId,
+    ]);
     return { studentId, criterionId, levelPosition: null, comment: "" };
   }
 
@@ -42,8 +48,9 @@ export async function setMark(gridId, userId, studentId, criterionId, payload) {
     [studentId, criterionId]
   );
 
-  const levelPosition = payload.levelPosition !== undefined ? payload.levelPosition : current?.level_position ?? 0;
-  const comment = payload.comment !== undefined ? payload.comment : current?.comment ?? "";
+  const levelPosition =
+    payload.levelPosition !== undefined ? payload.levelPosition : (current?.level_position ?? 0);
+  const comment = payload.comment !== undefined ? payload.comment : (current?.comment ?? "");
 
   await run(
     `INSERT INTO marks (student_id, criterion_id, level_position, comment) VALUES (?, ?, ?, ?)
@@ -58,9 +65,15 @@ export async function setMark(gridId, userId, studentId, criterionId, payload) {
 /** Applique le même niveau à tous les membres d'un groupe pour un critère donné (ou désélectionne si null). */
 export async function setGroupMark(gridId, userId, groupId, criterionId, levelPosition) {
   await assertGridExists(gridId, userId);
-  const group = await get("SELECT id FROM `groups` WHERE id = ? AND grid_id = ?", [groupId, gridId]);
+  const group = await get("SELECT id FROM `groups` WHERE id = ? AND grid_id = ?", [
+    groupId,
+    gridId,
+  ]);
   if (!group) throw notFound("Groupe introuvable dans cette grille.");
-  const criterion = await get("SELECT id FROM criteria WHERE id = ? AND grid_id = ?", [criterionId, gridId]);
+  const criterion = await get("SELECT id FROM criteria WHERE id = ? AND grid_id = ?", [
+    criterionId,
+    gridId,
+  ]);
   if (!criterion) throw notFound("Critère introuvable dans cette grille.");
 
   const members = await all("SELECT id FROM students WHERE group_id = ?", [groupId]);

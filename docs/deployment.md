@@ -4,27 +4,27 @@ Ce guide détaille les variables d'environnement, les modes d'exécution, l'init
 
 ## 1. Variables d'Environnement
 
-* `JWT_SECRET` : Obligatoire (production). Signe et vérifie les jetons JWT. Le changer déconnecte tous les utilisateurs.
+- `JWT_SECRET` : Obligatoire (production). Signe et vérifie les jetons JWT. Le changer déconnecte tous les utilisateurs.
 
-* `TURSO_DATABASE_URL` : Obligatoire (production). URL de la base libSQL (`libsql://...`) ou chemin SQLite local (`file:...`).
+- `TURSO_DATABASE_URL` : Obligatoire (production). URL de la base libSQL (`libsql://...`) ou chemin SQLite local (`file:...`).
 
-* `TURSO_AUTH_TOKEN` : Jeton d'authentification Turso.
+- `TURSO_AUTH_TOKEN` : Jeton d'authentification Turso.
 
-* `RESEND_API_KEY` : Obligatoire (production). Clé d'API Resend pour expédier les e-mails.
+- `RESEND_API_KEY` : Obligatoire (production). Clé d'API Resend pour expédier les e-mails.
 
-* `MAIL_FROM` : Adresse de l'expéditeur (ex: `"onboarding@resend.dev"`).
+- `MAIL_FROM` : Adresse de l'expéditeur (ex: `"onboarding@resend.dev"`).
 
-* `PORT` : Port du serveur Express (défaut: `3001`).
+- `PORT` : Port du serveur Express (défaut: `3001`).
 
-* `CLIENT_DIST` : Chemin absolu vers le dossier de build du client statique.
+- `CLIENT_DIST` : Chemin absolu vers le dossier de build du client statique.
 
 ## 2. Développement Local
 
 ### 2.1. Prérequis
 
-* Node.js 20.x ou supérieur.
+- Node.js 20.x ou supérieur.
 
-* npm 10.x ou supérieur.
+- npm 10.x ou supérieur.
 
 ### 2.2. Installation et démarrage
 
@@ -69,9 +69,9 @@ npm run db:init -w server
 
 Le fichier `docker-compose.yml` auto-héberge l'application.
 
-* **`client`** : Nginx sert les fichiers statiques et redirige `/api/` vers le backend.
+- **`client`** : Nginx sert les fichiers statiques et redirige `/api/` vers le backend.
 
-* **`server`** : Node.js exécute le serveur Express.
+- **`server`** : Node.js exécute le serveur Express.
 
 1. Créez le fichier d'environnement : `cp .env.example .env`.
 

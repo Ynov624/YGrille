@@ -10,7 +10,9 @@ export default function LevelsEditor({ levels, onChange }) {
       {levels.map((l, i) => (
         <div key={i} className="level-row-group" style={{ "--level": LEVEL_COLORS[i] }}>
           <div className="level-row">
-            <span className="level-dot" style={{ background: LEVEL_COLORS[i] }}>{i + 1}</span>
+            <span className="level-dot" style={{ background: LEVEL_COLORS[i] }}>
+              {i + 1}
+            </span>
             <input
               value={l.label}
               placeholder={`Niveau ${i + 1}`}
@@ -19,14 +21,18 @@ export default function LevelsEditor({ levels, onChange }) {
             />
             <label className="pct-input">
               <input
-                type="number" min="0" max="100"
+                type="number"
+                min="0"
+                max="100"
                 value={l.pct}
                 aria-label={`Barème du niveau ${i + 1}, en pourcentage`}
                 onChange={(e) => setLevel(i, { pct: e.target.value })}
               />
               <span aria-hidden="true">%</span>
             </label>
-            <span className="level-score">→ {((Number(l.pct) || 0) * 0.2).toFixed(1).replace(".", ",")} / 20</span>
+            <span className="level-score">
+              → {((Number(l.pct) || 0) * 0.2).toFixed(1).replace(".", ",")} / 20
+            </span>
           </div>
           <p className="muted small level-description">{LEVEL_DESCRIPTIONS[i]}</p>
         </div>

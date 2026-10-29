@@ -59,12 +59,10 @@ export function ThemeProvider({ children }) {
       resolvedTheme,
       setTheme,
     }),
-    [theme, resolvedTheme],
+    [theme, resolvedTheme]
   );
 
-  return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {

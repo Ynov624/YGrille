@@ -22,7 +22,8 @@ export function AuthProvider({ children }) {
       return;
     }
     setAuthToken(token);
-    authApi.fetchMe()
+    authApi
+      .fetchMe()
       .then(setUser)
       .catch(clearSession)
       .finally(() => setLoading(false));
@@ -34,17 +35,26 @@ export function AuthProvider({ children }) {
     setUser(authUser);
   }, []);
 
-  const login = useCallback(async (email, password) => {
-    storeSession(await authApi.login(email, password));
-  }, [storeSession]);
+  const login = useCallback(
+    async (email, password) => {
+      storeSession(await authApi.login(email, password));
+    },
+    [storeSession]
+  );
 
   // Ne stocke pas de session : l'inscription ne renvoie plus de token tant que
   // l'e-mail n'est pas vérifié (voir verifyEmail ci-dessous).
-  const register = useCallback((email, password, name) => authApi.register(email, password, name), []);
+  const register = useCallback(
+    (email, password, name) => authApi.register(email, password, name),
+    []
+  );
 
-  const verifyEmail = useCallback(async (email, code) => {
-    storeSession(await authApi.verifyEmail(email, code));
-  }, [storeSession]);
+  const verifyEmail = useCallback(
+    async (email, code) => {
+      storeSession(await authApi.verifyEmail(email, code));
+    },
+    [storeSession]
+  );
 
   const resendCode = useCallback((email) => authApi.resendCode(email), []);
 
@@ -54,7 +64,9 @@ export function AuthProvider({ children }) {
   }, [clearSession]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, verifyEmail, resendCode, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, verifyEmail, resendCode, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

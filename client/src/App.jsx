@@ -1,12 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  Routes,
-  Route,
-  Link,
-  NavLink,
-  Navigate,
-  useLocation,
-} from "react-router-dom";
+import { Routes, Route, Link, NavLink, Navigate, useLocation } from "react-router-dom";
 import GridListPage from "./features/grids/pages/GridListPage.jsx";
 import GridCreatePage from "./features/grids/pages/GridCreatePage.jsx";
 import GridEditPage from "./features/grids/pages/GridEditPage.jsx";
@@ -51,8 +44,7 @@ function AppShell() {
 
   if (!user) return <LoginPage />;
 
-  const gridsActive =
-    location.pathname === "/" || location.pathname.startsWith("/grilles");
+  const gridsActive = location.pathname === "/" || location.pathname.startsWith("/grilles");
   // Confort d'affichage seulement : l'API admin revérifie le rôle en base à chaque requête.
   const isAdmin = user.role === "admin";
 
@@ -88,11 +80,7 @@ function AppShell() {
       />
 
       <aside id="sidebar" className={`sidebar${navOpen ? " is-open" : ""}`}>
-        <Link
-          to="/"
-          className="brand sidebar-brand"
-          aria-label="YGrid, accueil"
-        >
+        <Link to="/" className="brand sidebar-brand" aria-label="YGrid, accueil">
           <Logo size={32} />
         </Link>
 
@@ -113,9 +101,7 @@ function AppShell() {
               <li>
                 <NavLink
                   to="/admin"
-                  className={({ isActive }) =>
-                    `nav-item${isActive ? " active" : ""}`
-                  }
+                  className={({ isActive }) => `nav-item${isActive ? " active" : ""}`}
                 >
                   <Icon name="shield" size={18} />
                   <span>Admin</span>
@@ -132,12 +118,8 @@ function AppShell() {
               {initialsOf(user)}
             </span>
             <div className="sidebar-user">
-              <span className="sidebar-user-name">
-                {user.name || user.email}
-              </span>
-              {user.name && user.email && (
-                <span className="sidebar-user-mail">{user.email}</span>
-              )}
+              <span className="sidebar-user-name">{user.name || user.email}</span>
+              {user.name && user.email && <span className="sidebar-user-mail">{user.email}</span>}
             </div>
             <button
               type="button"
@@ -159,10 +141,7 @@ function AppShell() {
           <Route path="/grilles/:id/modifier" element={<GridEditPage />} />
           <Route path="/grilles/:id/eleves" element={<GridStudentsPage />} />
           <Route path="/grilles/:id/evaluer" element={<GridEvaluatePage />} />
-          <Route
-            path="/admin"
-            element={isAdmin ? <AdminPage /> : <Navigate to="/" replace />}
-          />
+          <Route path="/admin" element={isAdmin ? <AdminPage /> : <Navigate to="/" replace />} />
         </Routes>
       </div>
     </div>

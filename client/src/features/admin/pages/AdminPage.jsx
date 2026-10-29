@@ -80,7 +80,10 @@ function PromoStudents({ promo, onChange }) {
   const saveEdit = async (s) => {
     setError(null);
     try {
-      await updatePromoStudent(promo.id, s.id, { lastName: editLastName, firstName: editFirstName });
+      await updatePromoStudent(promo.id, s.id, {
+        lastName: editLastName,
+        firstName: editFirstName,
+      });
       setEditingId(null);
       onChange();
     } catch (err) {
@@ -108,8 +111,19 @@ function PromoStudents({ promo, onChange }) {
       )}
 
       <form className="student-form" onSubmit={addStudent}>
-        <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Nom" aria-label="Nom" required />
-        <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Prénom" aria-label="Prénom" />
+        <input
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          placeholder="Nom"
+          aria-label="Nom"
+          required
+        />
+        <input
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          placeholder="Prénom"
+          aria-label="Prénom"
+        />
         <button type="submit" className="btn primary" disabled={adding}>
           <Icon name="plus" />
           {adding ? "Ajout…" : "Ajouter"}
@@ -135,38 +149,74 @@ function PromoStudents({ promo, onChange }) {
             <thead>
               <tr>
                 <th scope="col">Élève</th>
-                <th scope="col"><span className="sr-only">Actions</span></th>
+                <th scope="col">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {promo.students.map((s) => (
+              {promo.students.map((s) =>
                 editingId === s.id ? (
                   <tr key={s.id} className="is-editing">
                     <td>
                       <div className="student-form">
-                        <input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} placeholder="Nom" aria-label="Nom" />
-                        <input value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} placeholder="Prénom" aria-label="Prénom" />
+                        <input
+                          value={editLastName}
+                          onChange={(e) => setEditLastName(e.target.value)}
+                          placeholder="Nom"
+                          aria-label="Nom"
+                        />
+                        <input
+                          value={editFirstName}
+                          onChange={(e) => setEditFirstName(e.target.value)}
+                          placeholder="Prénom"
+                          aria-label="Prénom"
+                        />
                       </div>
                     </td>
                     <td className="actions">
                       <div className="row-actions">
-                        <button type="button" className="btn primary small" onClick={() => saveEdit(s)}>Enregistrer</button>
-                        <button type="button" className="btn ghost small" onClick={cancelEdit}>Annuler</button>
+                        <button
+                          type="button"
+                          className="btn primary small"
+                          onClick={() => saveEdit(s)}
+                        >
+                          Enregistrer
+                        </button>
+                        <button type="button" className="btn ghost small" onClick={cancelEdit}>
+                          Annuler
+                        </button>
                       </div>
                     </td>
                   </tr>
                 ) : (
                   <tr key={s.id}>
-                    <td><strong>{s.last_name}</strong> {s.first_name}</td>
+                    <td>
+                      <strong>{s.last_name}</strong> {s.first_name}
+                    </td>
                     <td className="actions">
                       <div className="row-actions">
-                        <button type="button" className="btn text small" onClick={() => startEdit(s)}><Icon name="pencil" />Modifier</button>
-                        <button type="button" className="btn text small danger" onClick={() => removeStudent(s)}><Icon name="trash" />Supprimer</button>
+                        <button
+                          type="button"
+                          className="btn text small"
+                          onClick={() => startEdit(s)}
+                        >
+                          <Icon name="pencil" />
+                          Modifier
+                        </button>
+                        <button
+                          type="button"
+                          className="btn text small danger"
+                          onClick={() => removeStudent(s)}
+                        >
+                          <Icon name="trash" />
+                          Supprimer
+                        </button>
                       </div>
                     </td>
                   </tr>
                 )
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -249,7 +299,12 @@ function PromosPanel() {
   };
 
   const removePromo = async (promo) => {
-    if (!window.confirm(`Supprimer la promo « ${promo.name} » et ses ${promo.students_count} élève(s) ?`)) return;
+    if (
+      !window.confirm(
+        `Supprimer la promo « ${promo.name} » et ses ${promo.students_count} élève(s) ?`
+      )
+    )
+      return;
     try {
       await deletePromoAdmin(promo.id);
       if (selectedId === promo.id) selectPromo(null);
@@ -288,7 +343,9 @@ function PromosPanel() {
           </section>
 
           <section className="block">
-            <h2 className="block-title">Promos <span className="count">{promos?.length ?? 0}</span></h2>
+            <h2 className="block-title">
+              Promos <span className="count">{promos?.length ?? 0}</span>
+            </h2>
             {promos === null && <Loading />}
             {promos?.length === 0 && <p className="muted">Aucune promo pour l'instant.</p>}
             {promos?.length > 0 && (
@@ -301,13 +358,21 @@ function PromosPanel() {
                       aria-current={selectedId === p.id ? "true" : undefined}
                       onClick={() => selectPromo(p.id)}
                     >
-                      <span className="row-mark" aria-hidden="true"><Icon name="cap" size={16} /></span>
+                      <span className="row-mark" aria-hidden="true">
+                        <Icon name="cap" size={16} />
+                      </span>
                       <span className="cell-stack">
                         <strong>{p.name}</strong>
-                        <span className="muted cell-meta">{p.students_count} élève{p.students_count > 1 ? "s" : ""}</span>
+                        <span className="muted cell-meta">
+                          {p.students_count} élève{p.students_count > 1 ? "s" : ""}
+                        </span>
                       </span>
                     </button>
-                    <button type="button" className="btn text small danger" onClick={() => removePromo(p)}>
+                    <button
+                      type="button"
+                      className="btn text small danger"
+                      onClick={() => removePromo(p)}
+                    >
                       <Icon name="trash" />
                       Supprimer
                     </button>
@@ -323,9 +388,22 @@ function PromosPanel() {
             <div className="admin-detail-head">
               {renaming ? (
                 <form className="student-form" onSubmit={saveRename}>
-                  <input value={renameValue} onChange={(e) => setRenameValue(e.target.value)} aria-label="Nom de la promo" autoFocus />
-                  <button type="submit" className="btn primary small">Enregistrer</button>
-                  <button type="button" className="btn ghost small" onClick={() => setRenaming(false)}>Annuler</button>
+                  <input
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    aria-label="Nom de la promo"
+                    autoFocus
+                  />
+                  <button type="submit" className="btn primary small">
+                    Enregistrer
+                  </button>
+                  <button
+                    type="button"
+                    className="btn ghost small"
+                    onClick={() => setRenaming(false)}
+                  >
+                    Annuler
+                  </button>
                 </form>
               ) : (
                 <>
@@ -361,9 +439,10 @@ function UsersPanel() {
   const toggleRole = async (u) => {
     const role = u.role === "admin" ? "user" : "admin";
     const who = u.name || u.email;
-    const question = role === "admin"
-      ? `Donner les droits administrateur à ${who} ?`
-      : `Retirer les droits administrateur à ${who} ?`;
+    const question =
+      role === "admin"
+        ? `Donner les droits administrateur à ${who} ?`
+        : `Retirer les droits administrateur à ${who} ?`;
     if (!window.confirm(question)) return;
     setSavingId(u.id);
     setError(null);
@@ -387,8 +466,12 @@ function UsersPanel() {
       )}
 
       <section className="block">
-        <h2 className="block-title">Utilisateurs <span className="count">{users?.length ?? 0}</span></h2>
-        <p className="muted">Les administrateurs ont accès à ce panneau : promos et gestion des rôles.</p>
+        <h2 className="block-title">
+          Utilisateurs <span className="count">{users?.length ?? 0}</span>
+        </h2>
+        <p className="muted">
+          Les administrateurs ont accès à ce panneau : promos et gestion des rôles.
+        </p>
         {users === null && <Loading />}
         {users?.length > 0 && (
           <div className="table-wrap">
@@ -398,7 +481,9 @@ function UsersPanel() {
                 <tr>
                   <th scope="col">Compte</th>
                   <th scope="col">Rôle</th>
-                  <th scope="col"><span className="sr-only">Actions</span></th>
+                  <th scope="col">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -457,10 +542,20 @@ export default function AdminPage() {
         breadcrumbs={[{ label: "Espace" }, { label: "Admin" }]}
         title="Panneau admin"
         subtitle="Gérez les promos, importables dans n'importe quelle grille, et les administrateurs."
-        actions={<Link to="/" className="btn ghost"><Icon name="arrowLeft" />Retour</Link>}
+        actions={
+          <Link to="/" className="btn ghost">
+            <Icon name="arrowLeft" />
+            Retour
+          </Link>
+        }
       />
 
-      <div className="segmented" data-active={TABS.findIndex((t) => t.id === tab)} role="group" aria-label="Section du panneau admin">
+      <div
+        className="segmented"
+        data-active={TABS.findIndex((t) => t.id === tab)}
+        role="group"
+        aria-label="Section du panneau admin"
+      >
         <span className="segmented-indicator" aria-hidden="true" />
         {TABS.map((t) => (
           <button
