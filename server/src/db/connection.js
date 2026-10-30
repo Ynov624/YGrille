@@ -33,7 +33,9 @@ async function createDbClient() {
   if (process.env.VERCEL) {
     // Sur Vercel le système de fichiers est en lecture seule : sans ce garde-fou, l'oubli de
     // la variable se traduirait par un ENOENT obscur sur server/data au lieu de la nommer.
-    throw new Error("TURSO_DATABASE_URL manquant : à définir dans les variables d'environnement du projet Vercel.");
+    throw new Error(
+      "TURSO_DATABASE_URL manquant : à définir dans les variables d'environnement du projet Vercel."
+    );
   }
   mkdirSync(dirname(LOCAL_DB_PATH), { recursive: true });
   const { createClient } = await import("@libsql/client");
@@ -81,7 +83,11 @@ export async function initDatabase() {
   const schema = readFileSync(join(here, "schema.sql"), "utf-8");
   await (await getClient()).executeMultiple(schema);
   // Même définition que dans schema.sql.
-  await addColumnIfMissing("users", "role", "TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin'))");
+  await addColumnIfMissing(
+    "users",
+    "role",
+    "TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin'))"
+  );
 }
 
 async function addColumnIfMissing(table, column, definition) {

@@ -4,28 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
-    <meta
-      name="theme-color"
-      content="#F7F7F5"
-      media="(prefers-color-scheme: light)"
-    />
-    <meta
-      name="theme-color"
-      content="#0B1120"
-      media="(prefers-color-scheme: dark)"
-    />
+    <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0B1120" media="(prefers-color-scheme: dark)" />
     <script>
       (function () {
         try {
           var t = localStorage.getItem("ygrille-theme") || "system";
           var isDark =
             t === "dark" ||
-            (t === "system" &&
-              window.matchMedia("(prefers-color-scheme: dark)").matches);
+            (t === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
           document.documentElement.dataset.theme = isDark ? "dark" : "light";
-          document.documentElement.style.colorScheme = isDark
-            ? "dark"
-            : "light";
+          document.documentElement.style.colorScheme = isDark ? "dark" : "light";
         } catch {
           // Ignore localStorage access failures (e.g. private browsing or disabled storage)
         }

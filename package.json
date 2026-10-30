@@ -12,6 +12,10 @@
     "dev:server": "npm run dev -w server",
     "dev:client": "npm run dev -w client",
     "build": "npm run build -w client",
+    "test": "node --test client/src/features/grids/grade.test.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "electron": "npm run build && electron .",
     "dist": "npm run build && electron-builder --win",
     "dist:mac": "npm run build && electron-builder --mac",
@@ -27,11 +31,17 @@
   },
   "devDependencies": {
     "@electron/rebuild": "^4.2.0",
+    "@eslint/js": "^9.39.5",
     "autocannon": "^8.0.0",
     "concurrently": "^9.1.0",
     "electron": "^33.4.11",
     "electron-builder": "^25.1.8",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
     "lighthouse": "^13.4.1",
+    "prettier": "^3.9.10",
     "puppeteer-core": "^25.5.0"
   },
   "build": {

@@ -4,7 +4,12 @@ import Icon from "../../../components/Icon.jsx";
  * Édition groupée : chaque catégorie affiche directement ses critères
  * (ajout/suppression/pondération), sans sélecteur de catégorie par critère.
  */
-export default function CategoryCriteriaEditor({ categories, criteria, onCategoriesChange, onCriteriaChange }) {
+export default function CategoryCriteriaEditor({
+  categories,
+  criteria,
+  onCategoriesChange,
+  onCriteriaChange,
+}) {
   const setCategory = (idx, patch) =>
     onCategoriesChange(categories.map((c, i) => (i === idx ? { ...c, ...patch } : c)));
   const addCategory = () =>
@@ -27,7 +32,9 @@ export default function CategoryCriteriaEditor({ categories, criteria, onCategor
         return (
           <div key={cat.id} className="category-block">
             <div className="category-block-head">
-              <span className="category-index" aria-hidden="true">{String(ci + 1).padStart(2, "0")}</span>
+              <span className="category-index" aria-hidden="true">
+                {String(ci + 1).padStart(2, "0")}
+              </span>
               <input
                 className="cat-name"
                 value={cat.name}
@@ -35,7 +42,9 @@ export default function CategoryCriteriaEditor({ categories, criteria, onCategor
                 aria-label={`Nom de la catégorie ${ci + 1}`}
                 onChange={(e) => setCategory(ci, { name: e.target.value })}
               />
-              <span className="cat-weight-total">Total des points : <strong>{catTotalWeight}</strong></span>
+              <span className="cat-weight-total">
+                Total des points : <strong>{catTotalWeight}</strong>
+              </span>
               <button
                 type="button"
                 className="icon-btn"
@@ -70,7 +79,10 @@ export default function CategoryCriteriaEditor({ categories, criteria, onCategor
                 <p className="muted small">Aucun critère dans cette catégorie.</p>
               )}
               {catCriteria.map(({ c, i }) => {
-                const share = catTotalWeight > 0 ? Math.round(((Number(c.weight) || 0) / catTotalWeight) * 100) : 0;
+                const share =
+                  catTotalWeight > 0
+                    ? Math.round(((Number(c.weight) || 0) / catTotalWeight) * 100)
+                    : 0;
                 return (
                   <div key={c.id} className="crit-row">
                     <input
@@ -83,13 +95,17 @@ export default function CategoryCriteriaEditor({ categories, criteria, onCategor
                     <label className="crit-weight">
                       <span className="sr-only">Points</span>
                       <input
-                        type="number" min="0" step="0.5"
+                        type="number"
+                        min="0"
+                        step="0.5"
                         value={c.weight}
                         onChange={(e) => setCriterion(i, { weight: e.target.value })}
                       />
                     </label>
                     <span className="crit-share">
-                      <span className="share-bar" aria-hidden="true"><span style={{ width: `${share}%` }} /></span>
+                      <span className="share-bar" aria-hidden="true">
+                        <span style={{ width: `${share}%` }} />
+                      </span>
                       {share}%
                     </span>
                     <button

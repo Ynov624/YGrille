@@ -15,7 +15,11 @@ export default function PageHeader({ breadcrumbs, title, subtitle, actions }) {
               const last = i === breadcrumbs.length - 1;
               return (
                 <li key={i}>
-                  {b.to && !last ? <Link to={b.to}>{b.label}</Link> : <span aria-current={last ? "page" : undefined}>{b.label}</span>}
+                  {b.to && !last ? (
+                    <Link to={b.to}>{b.label}</Link>
+                  ) : (
+                    <span aria-current={last ? "page" : undefined}>{b.label}</span>
+                  )}
                   {!last && <Icon name="chevronRight" size={12} className="breadcrumbs-sep" />}
                 </li>
               );

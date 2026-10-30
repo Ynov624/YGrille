@@ -10,14 +10,19 @@ export default function GridPreview({ name, levels, categories, criteria }) {
       <tr key={`${cat.id}-head`} className="grid-preview-category-row">
         <td colSpan={levels.length + 2}>
           {cat.name || "Catégorie sans nom"}
-          <span className="muted small"> · {totalWeight} pt{totalWeight > 1 ? "s" : ""}</span>
+          <span className="muted small">
+            {" "}
+            · {totalWeight} pt{totalWeight > 1 ? "s" : ""}
+          </span>
           {cat.deliverable && <span className="muted small"> · Livrable : {cat.deliverable}</span>}
         </td>
       </tr>,
       ...catCriteria.map((c, i) => (
         <tr key={`${cat.id}-${i}`}>
           <td>{c.name || "Critère sans nom"}</td>
-          {levels.map((_, li) => <td key={li} className="grid-preview-cell" />)}
+          {levels.map((_, li) => (
+            <td key={li} className="grid-preview-cell" />
+          ))}
           <td className="grid-preview-weight">{Number(c.weight) || 0}</td>
         </tr>
       )),
@@ -37,8 +42,14 @@ export default function GridPreview({ name, levels, categories, criteria }) {
               <th scope="col">Critère</th>
               {levels.map((l, i) => (
                 <th scope="col" key={i}>
-                  <span className="level-dot" style={{ background: LEVEL_COLORS[i] }}>{i + 1}</span>
-                  <span className="level-header-label">{l.label || `Niveau ${i + 1}`}<br />{Number(l.pct) || 0}%</span>
+                  <span className="level-dot" style={{ background: LEVEL_COLORS[i] }}>
+                    {i + 1}
+                  </span>
+                  <span className="level-header-label">
+                    {l.label || `Niveau ${i + 1}`}
+                    <br />
+                    {Number(l.pct) || 0}%
+                  </span>
                 </th>
               ))}
               <th scope="col">Points</th>

@@ -18,9 +18,12 @@ export function exportGradesCsv(grid, students, getMarkFor) {
   const header = ["Nom", "Prénom", "Note"];
   const rows = students
     .slice()
-    .sort((a, b) => a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name))
+    .sort(
+      (a, b) => a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name)
+    )
     .map((student) => {
-      const getLevelPosition = (criterionId) => getMarkFor(student.id, criterionId)?.levelPosition ?? null;
+      const getLevelPosition = (criterionId) =>
+        getMarkFor(student.id, criterionId)?.levelPosition ?? null;
       const grade = computeGrade(grid, getLevelPosition);
       return [student.last_name, student.first_name, formatGrade(grade.grade20)];
     });

@@ -78,7 +78,10 @@ export async function updatePromoStudent(promoId, id, payload) {
 }
 
 export async function deletePromoStudent(promoId, id) {
-  const affectedRows = await run("DELETE FROM promo_students WHERE id = ? AND promo_id = ?", [id, promoId]);
+  const affectedRows = await run("DELETE FROM promo_students WHERE id = ? AND promo_id = ?", [
+    id,
+    promoId,
+  ]);
   if (affectedRows === 0) throw notFound("Élève introuvable.");
 }
 

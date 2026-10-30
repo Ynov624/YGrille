@@ -15,7 +15,10 @@ if (!email || !ROLES.includes(role)) {
 
 const target = process.env.TURSO_DATABASE_URL || "la base locale (server/data/ygrille.db)";
 await initDatabase();
-const updated = await run("UPDATE users SET role = ? WHERE email = ?", [role, email.trim().toLowerCase()]);
+const updated = await run("UPDATE users SET role = ? WHERE email = ?", [
+  role,
+  email.trim().toLowerCase(),
+]);
 if (updated === 0) {
   console.error(`[db] aucun compte ${email} sur ${target} : la personne doit d'abord s'inscrire.`);
   process.exit(1);

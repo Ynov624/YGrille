@@ -12,5 +12,8 @@ export function triggerBlobDownload(blob, filename) {
 
 /** Nettoie un nom (grille, élève) pour en faire un nom de fichier valide. */
 export function sanitizeFileName(name) {
-  return name.trim().replace(/\s+/g, "_").replace(/[^\w-]/g, "");
+  return name
+    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/[^\w-]/g, "");
 }

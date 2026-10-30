@@ -6,15 +6,15 @@ Ce document décrit l'architecture, le code, les données, les flux et le moteur
 
 YGrille utilise un monorepo avec **npm workspaces** :
 
-* **Client (`client/`)** : SPA React 18, Vite, CSS Vanilla.
+- **Client (`client/`)** : SPA React 18, Vite, CSS Vanilla.
 
-* **Serveur (`server/`)** : API REST Node.js et Express.
+- **Serveur (`server/`)** : API REST Node.js et Express.
 
-* **Base de données** : SQLite sur Turso ou local.
+- **Base de données** : SQLite sur Turso ou local.
 
-* **Electron (`electron/`)** : Wrapper desktop optionnel.
+- **Electron (`electron/`)** : Wrapper desktop optionnel.
 
-* **Vercel (`api/index.mjs` + `vercel.json`)** : Adaptation serverless Vercel.
+- **Vercel (`api/index.mjs` + `vercel.json`)** : Adaptation serverless Vercel.
 
 ```mermaid
 graph TD
@@ -113,15 +113,15 @@ YGrille calcule les notes par accumulation des points des critères.
 
 1. **Niveaux d'acquisition** : Chaque grille possède 5 niveaux (positions `0` à `4`) avec un pourcentage (0 à 100%) :
 
-   * Position 0 : *Non évaluable* (0%)
+   - Position 0 : _Non évaluable_ (0%)
 
-   * Position 1 : *Non acquis* (25%)
+   - Position 1 : _Non acquis_ (25%)
 
-   * Position 2 : *En cours d'acquisition* (50%)
+   - Position 2 : _En cours d'acquisition_ (50%)
 
-   * Position 3 : *Acquis* (75%)
+   - Position 3 : _Acquis_ (75%)
 
-   * Position 4 : *Maîtrisé* (100%)
+   - Position 4 : _Maîtrisé_ (100%)
 
 2. **Points d'un critère** : Le système calcule les points selon le poids et le niveau :
 
@@ -141,15 +141,15 @@ $$\text{Note Finale (/20)} = \frac{\sum_{c \in \text{évalués}} \text{Points}_c
 
 Le système propose des appréciations selon la note :
 
-* $\le 8$ : *Résultats insuffisants, des lacunes importantes restent à combler.*
+- $\le 8$ : _Résultats insuffisants, des lacunes importantes restent à combler._
 
-* $\le 11$ : *Résultats fragiles, un travail de consolidation est nécessaire.*
+- $\le 11$ : _Résultats fragiles, un travail de consolidation est nécessaire._
 
-* $\le 14$ : *Résultats satisfaisants, poursuivez vos efforts.*
+- $\le 14$ : _Résultats satisfaisants, poursuivez vos efforts._
 
-* $\le 16$ : *Bons résultats, continuez ainsi.*
+- $\le 16$ : _Bons résultats, continuez ainsi._
 
-* $> 16$ : *Excellents résultats, félicitations.*
+- $> 16$ : _Excellents résultats, félicitations._
 
 ## 4. Génération de documents
 
@@ -157,29 +157,29 @@ Le navigateur génère les PDF, ZIP, CSV et JSON. Cela soulage le serveur et év
 
 ### 4.1. Générateur PDF (`pdf.js`)
 
-* Utilise **`jspdf`** et **`jspdf-autotable`**.
+- Utilise **`jspdf`** et **`jspdf-autotable`**.
 
-* Format : **A4 Paysage**.
+- Format : **A4 Paysage**.
 
-* Style : Bandeau bleu, tableau par catégorie, badges de couleur, points et appréciations.
+- Style : Bandeau bleu, tableau par catégorie, badges de couleur, points et appréciations.
 
-* Gère la pagination.
+- Gère la pagination.
 
 ### 4.2. Export ZIP (`pdf.js` + `jszip`)
 
-* Compresse les PDF d'une classe dans un fichier `.zip` avec `JSZip`.
+- Compresse les PDF d'une classe dans un fichier `.zip` avec `JSZip`.
 
 ### 4.3. Export CSV (`csvExport.js`)
 
-* Génère un fichier CSV `Nom;Prénom;Note`.
+- Génère un fichier CSV `Nom;Prénom;Note`.
 
-* Utilise des séparateurs points-virgules et des virgules décimales.
+- Utilise des séparateurs points-virgules et des virgules décimales.
 
-* Inclut un BOM UTF-8 pour la compatibilité Excel.
+- Inclut un BOM UTF-8 pour la compatibilité Excel.
 
 ### 4.4. Transfert JSON (`jsonTransfer.js`)
 
-* Exporte et importe la structure d'une grille en JSON.
+- Exporte et importe la structure d'une grille en JSON.
 
 ## 5. Sécurité et authentification
 
@@ -187,22 +187,22 @@ Le navigateur génère les PDF, ZIP, CSV et JSON. Cela soulage le serveur et év
 
 2. **Mots de passe** :
 
-   * 12 caractères minimum.
+   - 12 caractères minimum.
 
-   * 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial.
+   - 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial.
 
-   * Hachage `bcryptjs`.
+   - Hachage `bcryptjs`.
 
 3. **Double facteur (E-mail)** :
 
-   * Envoie un code à 6 chiffres.
+   - Envoie un code à 6 chiffres.
 
-   * Stocke le hash bcrypt (valide 15 minutes, 5 tentatives maximum).
+   - Stocke le hash bcrypt (valide 15 minutes, 5 tentatives maximum).
 
 4. **Jetons JWT** :
 
-   * Signature HMAC SHA-256.
+   - Signature HMAC SHA-256.
 
-   * Contient l'ID, l'e-mail et le nom.
+   - Contient l'ID, l'e-mail et le nom.
 
-   * Le serveur vérifie le rôle en base de données pour chaque requête sensible.
+   - Le serveur vérifie le rôle en base de données pour chaque requête sensible.

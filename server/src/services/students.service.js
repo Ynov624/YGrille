@@ -21,10 +21,12 @@ export async function listStudents(gridId, userId) {
 export async function createStudent(gridId, userId, payload) {
   await assertGridExists(gridId, userId);
   const id = randomUUID();
-  await run(
-    "INSERT INTO students (id, grid_id, last_name, first_name) VALUES (?, ?, ?, ?)",
-    [id, gridId, payload.lastName, payload.firstName]
-  );
+  await run("INSERT INTO students (id, grid_id, last_name, first_name) VALUES (?, ?, ?, ?)", [
+    id,
+    gridId,
+    payload.lastName,
+    payload.firstName,
+  ]);
   return get(`SELECT ${STUDENT_FIELDS} FROM students WHERE id = ?`, [id]);
 }
 
@@ -48,7 +50,10 @@ export async function importStudentsFromPromo(gridId, userId, promoId) {
 
 export async function updateStudent(gridId, userId, id, payload) {
   await assertGridExists(gridId, userId);
-  const current = await get(`SELECT ${STUDENT_FIELDS} FROM students WHERE id = ? AND grid_id = ?`, [id, gridId]);
+  const current = await get(`SELECT ${STUDENT_FIELDS} FROM students WHERE id = ? AND grid_id = ?`, [
+    id,
+    gridId,
+  ]);
   if (!current) throw notFound("Élève introuvable.");
   const comment = payload.comment !== undefined ? payload.comment : current.comment;
   await run(
@@ -67,13 +72,17 @@ export async function deleteStudent(gridId, userId, id) {
 export async function setStudentGroup(gridId, userId, id, groupId) {
   await assertGridExists(gridId, userId);
   if (groupId) {
-    const group = await get("SELECT id FROM `groups` WHERE id = ? AND grid_id = ?", [groupId, gridId]);
+    const group = await get("SELECT id FROM `groups` WHERE id = ? AND grid_id = ?", [
+      groupId,
+      gridId,
+    ]);
     if (!group) throw notFound("Groupe introuvable dans cette grille.");
   }
-  const affectedRows = await run(
-    "UPDATE students SET group_id = ? WHERE id = ? AND grid_id = ?",
-    [groupId, id, gridId]
-  );
+  const affectedRows = await run("UPDATE students SET group_id = ? WHERE id = ? AND grid_id = ?", [
+    groupId,
+    id,
+    gridId,
+  ]);
   if (affectedRows === 0) throw notFound("Élève introuvable.");
   return get(`SELECT ${STUDENT_FIELDS} FROM students WHERE id = ?`, [id]);
 }
