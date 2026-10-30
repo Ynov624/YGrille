@@ -33,15 +33,17 @@ export function validateGridPayload(body) {
   const categories = Array.isArray(body?.categories) ? body.categories : [];
   if (categories.length === 0) errors.push("Ajoutez au moins une catégorie.");
   const cleanCategories = categories.map((cat, i) => {
+    const cid = typeof cat?.id === "string" ? cat.id.trim() : null;
     const cname = typeof cat?.name === "string" ? cat.name.trim() : "";
     const deliverable = typeof cat?.deliverable === "string" ? cat.deliverable.trim() : "";
     if (!cname) errors.push(`La catégorie ${i + 1} doit avoir un nom.`);
-    return { name: cname, deliverable };
+    return { id: cid || undefined, name: cname, deliverable };
   });
 
   const criteria = Array.isArray(body?.criteria) ? body.criteria : [];
   if (criteria.length === 0) errors.push("Ajoutez au moins un critère.");
   const cleanCriteria = criteria.map((c, i) => {
+    const crid = typeof c?.id === "string" ? c.id.trim() : null;
     const cname = typeof c?.name === "string" ? c.name.trim() : "";
     const weight = Number(c?.weight);
     const categoryIndex = Number.isInteger(c?.categoryIndex) ? c.categoryIndex : -1;
@@ -52,7 +54,7 @@ export function validateGridPayload(body) {
     if (categoryIndex < 0 || categoryIndex >= cleanCategories.length) {
       errors.push(`Le critère ${i + 1} doit être rattaché à une catégorie.`);
     }
-    return { name: cname, weight, categoryIndex };
+    return { id: crid || undefined, name: cname, weight, categoryIndex };
   });
   if (cleanCriteria.length > 0 && cleanCriteria.reduce((s, c) => s + (c.weight || 0), 0) <= 0) {
     errors.push("La somme des points des critères doit être supérieure à 0.");

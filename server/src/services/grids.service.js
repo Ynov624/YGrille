@@ -72,17 +72,106 @@ export async function createGrid(userId, payload) {
   return getGrid(gridId, userId);
 }
 
-/** Mise à jour atomique (un seul lot) : remplace niveaux, catégories et critères. */
+/** Mise à jour différentielle atomique : préserve les identifiants et les notes existantes. */
 export async function updateGrid(id, userId, payload) {
   const existing = await get("SELECT id FROM grids WHERE id = ? AND user_id = ?", [id, userId]);
   if (!existing) throw notFound("Grille introuvable.");
 
-  await batch([
-    { sql: "UPDATE grids SET name = ? WHERE id = ?", args: [payload.name, id] },
-    { sql: "DELETE FROM levels WHERE grid_id = ?", args: [id] },
-    { sql: "DELETE FROM categories WHERE grid_id = ?", args: [id] }, // cascade → criteria
-    ...gridContentsStatements(id, payload),
+  const [currentCategories, currentCriteria] = await Promise.all([
+    all("SELECT id FROM categories WHERE grid_id = ?", [id]),
+    all("SELECT id FROM criteria WHERE grid_id = ?", [id]),
   ]);
+
+  const currentCatIds = new Set(currentCategories.map((c) => c.id));
+  const currentCritIds = new Set(currentCriteria.map((c) => c.id));
+
+  // Préserve l'ID existant ou génère un nouvel UUID
+  const categoryIds = payload.categories.map((cat) =>
+    cat.id && currentCatIds.has(cat.id) ? cat.id : randomUUID()
+  );
+  const nextCatIdSet = new Set(categoryIds);
+
+  const criteriaIds = payload.criteria.map((crit) =>
+    crit.id && currentCritIds.has(crit.id) ? crit.id : randomUUID()
+  );
+  const nextCritIdSet = new Set(criteriaIds);
+
+  const statements = [];
+
+  // 1. Mise à jour du nom
+  statements.push({
+    sql: "UPDATE grids SET name = ? WHERE id = ?",
+    args: [payload.name, id],
+  });
+
+  // 2. Mise à jour des niveaux (positions 0..4)
+  payload.levels.forEach((l, i) => {
+    statements.push({
+      sql: "UPDATE levels SET label = ?, pct = ? WHERE grid_id = ? AND position = ?",
+      args: [l.label, l.pct, id, i],
+    });
+  });
+
+  // 3. Suppression des critères retirés de la grille
+  for (const crit of currentCriteria) {
+    if (!nextCritIdSet.has(crit.id)) {
+      statements.push({
+        sql: "DELETE FROM criteria WHERE id = ?",
+        args: [crit.id],
+      });
+    }
+  }
+
+  // 4. Suppression des catégories retirées de la grille (cascade sur leurs critères)
+  for (const cat of currentCategories) {
+    if (!nextCatIdSet.has(cat.id)) {
+      statements.push({
+        sql: "DELETE FROM categories WHERE id = ?",
+        args: [cat.id],
+      });
+    }
+  }
+
+  // 5. Décalage temporaire des positions des catégories pour éviter les conflits d'unicité UNIQUE(grid_id, position)
+  statements.push({
+    sql: "UPDATE categories SET position = -position - 1 WHERE grid_id = ?",
+    args: [id],
+  });
+
+  // 6. Mise à jour ou insertion des catégories
+  payload.categories.forEach((cat, i) => {
+    const catId = categoryIds[i];
+    if (currentCatIds.has(catId)) {
+      statements.push({
+        sql: "UPDATE categories SET position = ?, name = ?, deliverable = ? WHERE id = ?",
+        args: [i, cat.name, cat.deliverable, catId],
+      });
+    } else {
+      statements.push({
+        sql: "INSERT INTO categories (id, grid_id, position, name, deliverable) VALUES (?, ?, ?, ?, ?)",
+        args: [catId, id, i, cat.name, cat.deliverable],
+      });
+    }
+  });
+
+  // 7. Mise à jour ou insertion des critères
+  payload.criteria.forEach((crit, i) => {
+    const critId = criteriaIds[i];
+    const catId = categoryIds[crit.categoryIndex];
+    if (currentCritIds.has(critId)) {
+      statements.push({
+        sql: "UPDATE criteria SET category_id = ?, position = ?, name = ?, weight = ? WHERE id = ?",
+        args: [catId, i, crit.name, crit.weight, critId],
+      });
+    } else {
+      statements.push({
+        sql: "INSERT INTO criteria (id, grid_id, category_id, position, name, weight) VALUES (?, ?, ?, ?, ?, ?)",
+        args: [critId, id, catId, i, crit.name, crit.weight],
+      });
+    }
+  });
+
+  await batch(statements);
   return getGrid(id, userId);
 }
 

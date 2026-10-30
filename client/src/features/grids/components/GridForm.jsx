@@ -37,8 +37,13 @@ export default function GridForm({
     onSubmit({
       name,
       levels: levels.map((l) => ({ label: l.label, pct: Number(l.pct) })),
-      categories: categories.map((c) => ({ name: c.name, deliverable: c.deliverable })),
+      categories: categories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        deliverable: c.deliverable,
+      })),
       criteria: criteria.map((c) => ({
+        id: c.id,
         name: c.name,
         weight: Number(c.weight),
         categoryIndex: categories.findIndex((cat) => cat.id === c.categoryId),
@@ -131,8 +136,8 @@ export default function GridForm({
             <div className="error-box" role="alert">
               <Icon name="alert" />
               <ul>
-                {errors.map((e, i) => (
-                  <li key={i}>{e}</li>
+                {errors.map((e) => (
+                  <li key={e}>{e}</li>
                 ))}
               </ul>
             </div>
