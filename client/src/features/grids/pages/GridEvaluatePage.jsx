@@ -37,13 +37,15 @@ function initialsFor(entity, mode) {
 }
 
 /** Appréciation d'un critère, pour l'élève (ou le groupe) sélectionné. */
-function CriterionComment({ criterion, entry, onSetComment }) {
+function CriterionComment({ entry, onSetComment }) {
   const storedComment = entry?.comment ?? "";
   const [commentDraft, setCommentDraft] = useState(storedComment);
+  const [prevStored, setPrevStored] = useState(storedComment);
 
-  useEffect(() => {
+  if (prevStored !== storedComment) {
+    setPrevStored(storedComment);
     setCommentDraft(storedComment);
-  }, [criterion.id, storedComment]);
+  }
 
   const commitComment = () => {
     if (commentDraft !== storedComment) onSetComment(commentDraft);
@@ -135,9 +137,12 @@ export default function GridEvaluatePage() {
   const goPrev = () => setIndex((i) => Math.max(0, i - 1));
   const goNext = () => setIndex((i) => Math.min((list?.length ?? 1) - 1, i + 1));
 
-  useEffect(() => {
-    if (current) setComment(mode === "individuel" ? (current.comment ?? "") : "");
-  }, [mode, current?.id]);
+  const [prevEntityKey, setPrevEntityKey] = useState(null);
+  const currentKey = current ? `${mode}:${current.id}` : null;
+  if (currentKey !== prevEntityKey) {
+    setPrevEntityKey(currentKey);
+    setComment(mode === "individuel" ? (current?.comment ?? "") : "");
+  }
 
   const groupCriterionValue = (criterionId, memberIds) => {
     if (!memberIds || memberIds.length === 0) return null;
@@ -367,22 +372,24 @@ export default function GridEvaluatePage() {
           <div
             className="segmented"
             data-active={mode === "individuel" ? 0 : 1}
-            role="group"
+            role="tablist"
             aria-label="Mode d'évaluation"
           >
             <span className="segmented-indicator" aria-hidden="true" />
             <button
               type="button"
+              role="tab"
+              aria-selected={mode === "individuel"}
               className={`segmented-item${mode === "individuel" ? " active" : ""}`}
-              aria-pressed={mode === "individuel"}
               onClick={() => switchMode("individuel")}
             >
               Individuel
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={mode === "groupe"}
               className={`segmented-item${mode === "groupe" ? " active" : ""}`}
-              aria-pressed={mode === "groupe"}
               onClick={() => switchMode("groupe")}
             >
               Groupe

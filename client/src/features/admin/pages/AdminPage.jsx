@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../auth/AuthContext.jsx";
 import {
@@ -238,13 +238,19 @@ function PromosPanel() {
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
 
-  const showError = (e) => setError(e.details?.length ? e.details.join(" ") : e.message);
+  const showError = useCallback(
+    (e) => setError(e.details?.length ? e.details.join(" ") : e.message),
+    []
+  );
 
-  const reloadPromos = () => fetchPromosAdmin().then(setPromos).catch(showError);
+  const reloadPromos = useCallback(
+    () => fetchPromosAdmin().then(setPromos).catch(showError),
+    [showError]
+  );
 
   useEffect(() => {
     reloadPromos();
-  }, []);
+  }, [reloadPromos]);
 
   const loadSelected = (id) => {
     if (!id) {
@@ -553,7 +559,7 @@ export default function AdminPage() {
       <div
         className="segmented"
         data-active={TABS.findIndex((t) => t.id === tab)}
-        role="group"
+        role="tablist"
         aria-label="Section du panneau admin"
       >
         <span className="segmented-indicator" aria-hidden="true" />
@@ -561,8 +567,9 @@ export default function AdminPage() {
           <button
             key={t.id}
             type="button"
+            role="tab"
+            aria-selected={tab === t.id}
             className={`segmented-item${tab === t.id ? " active" : ""}`}
-            aria-pressed={tab === t.id}
             onClick={() => setTab(t.id)}
           >
             {t.label}

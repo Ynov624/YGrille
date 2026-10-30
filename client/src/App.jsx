@@ -26,7 +26,11 @@ function AppShell() {
   const [navOpen, setNavOpen] = useState(false);
 
   // Le tiroir de navigation mobile se referme à chaque changement d'écran ou sur Échap.
-  useEffect(() => setNavOpen(false), [location.pathname]);
+  const [prevPath, setPrevPath] = useState(location.pathname);
+  if (prevPath !== location.pathname) {
+    setPrevPath(location.pathname);
+    setNavOpen(false);
+  }
   useEffect(() => {
     if (!navOpen) return;
     const onKey = (e) => e.key === "Escape" && setNavOpen(false);

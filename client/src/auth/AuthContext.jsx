@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import * as authApi from "../api/auth.js";
 import { setAuthToken } from "../api/client.js";
 
@@ -7,7 +7,7 @@ const TOKEN_KEY = "ygrid_token";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(localStorage.getItem(TOKEN_KEY)));
 
   const clearSession = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
@@ -17,12 +17,9 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
     setAuthToken(token);
-    authApi
+    void authApi
       .fetchMe()
       .then(setUser)
       .catch(clearSession)
@@ -63,13 +60,12 @@ export function AuthProvider({ children }) {
     authApi.logout().catch(() => {});
   }, [clearSession]);
 
-  return (
-    <AuthContext.Provider
-      value={{ user, loading, login, register, verifyEmail, resendCode, logout }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({ user, loading, login, register, verifyEmail, resendCode, logout }),
+    [user, loading, login, register, verifyEmail, resendCode, logout]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
