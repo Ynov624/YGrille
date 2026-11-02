@@ -37,7 +37,7 @@ export default function GridMemberRow({
                 <option value="owner">Propriétaire</option>
                 <option value="editor">Éditeur</option>
               </select>
-              <Icon name="chevronDown" size={14} className="select-caret" />
+              <Icon name="chevronDown" size={14} className="select-chevron" />
             </div>
 
             {!isCurrentUser && (

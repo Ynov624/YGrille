@@ -626,6 +626,12 @@ select {
   gap: 2px;
   min-width: 0;
 }
+.cell-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .cell-stack strong {
   font-size: 14.5px;
   font-weight: 600;
@@ -1044,7 +1050,7 @@ dialog.modal::backdrop {
 }
 
 .share-invite-form .select-wrap {
-  flex: 0 0 120px;
+  flex: 0 0 130px;
 }
 
 .share-members-section {
@@ -1116,7 +1122,17 @@ dialog.modal::backdrop {
 }
 
 .member-actions .select-wrap {
-  width: 125px;
+  width: 130px;
+}
+
+.member-actions select {
+  height: 32px;
+  padding: 0 28px 0 10px;
+  font-size: 13px;
+}
+
+.member-actions .select-chevron {
+  right: 8px;
 }
 
 .role-tag {

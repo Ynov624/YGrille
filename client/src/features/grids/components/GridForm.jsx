@@ -17,6 +17,7 @@ export default function GridForm({
   saving,
   errors,
   onSubmit,
+  actions,
 }) {
   useDocumentTitle(title);
   const [name, setName] = useState(initial.name);
@@ -67,9 +68,11 @@ export default function GridForm({
         title={title}
         subtitle={subtitle}
         actions={
-          <Link to="/" className="btn ghost">
-            Annuler
-          </Link>
+          actions || (
+            <Link to="/" className="btn ghost">
+              Annuler
+            </Link>
+          )
         }
       />
 

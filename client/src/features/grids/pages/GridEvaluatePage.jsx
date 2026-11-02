@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { fetchGrid } from "../../../api/grids.js";
+import GridShareModal from "../components/GridShareModal.jsx";
 import { fetchStudents, updateStudent as updateStudentApi } from "../../../api/students.js";
 import { fetchGroups } from "../../../api/groups.js";
 import {
@@ -88,12 +89,14 @@ function CriteriaTableHeader({ levels }) {
 
 export default function GridEvaluatePage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [grid, setGrid] = useState(null);
   useDocumentTitle(grid ? `Évaluer - ${grid.name}` : "Évaluer");
   const [students, setStudents] = useState(null);
   const [groups, setGroups] = useState(null);
   const [marks, setMarks] = useState({});
   const [error, setError] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [mode, setMode] = useState("individuel");
   const [index, setIndex] = useState(0);
   const [comment, setComment] = useState("");
@@ -322,6 +325,10 @@ export default function GridEvaluatePage() {
         subtitle="Choisissez un niveau pour chaque critère."
         actions={
           <>
+            <button type="button" className="btn ghost" onClick={() => setShowShareModal(true)}>
+              <Icon name="userPlus" />
+              Partager
+            </button>
             <Link to="/" className="btn text">
               <Icon name="arrowLeft" />
               Retour
@@ -658,6 +665,16 @@ export default function GridEvaluatePage() {
             </section>
           )}
         </>
+      )}
+      {showShareModal && grid && (
+        <GridShareModal
+          gridId={grid.id}
+          gridName={grid.name}
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          currentUserRole={grid.role}
+          onLeftGrid={() => navigate("/")}
+        />
       )}
     </main>
   );

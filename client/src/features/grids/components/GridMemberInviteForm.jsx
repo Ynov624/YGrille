@@ -37,9 +37,9 @@ export default function GridMemberInviteForm({ onAddMember, submitting }) {
           <option value="editor">Éditeur</option>
           <option value="owner">Propriétaire</option>
         </select>
-        <Icon name="chevronDown" size={14} className="select-caret" />
+        <Icon name="chevronDown" size={14} className="select-chevron" />
       </div>
-      <button type="submit" className="btn primary small" disabled={submitting || !email.trim()}>
+      <button type="submit" className="btn primary" disabled={submitting || !email.trim()}>
         <Icon name="userPlus" />
         <span>Ajouter</span>
       </button>
