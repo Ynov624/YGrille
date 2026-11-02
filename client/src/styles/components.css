@@ -626,6 +626,12 @@ select {
   gap: 2px;
   min-width: 0;
 }
+.cell-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .cell-stack strong {
   font-size: 14.5px;
   font-weight: 600;
@@ -973,6 +979,184 @@ tr:hover .row-mark,
   letter-spacing: 0.02em;
 }
 
+/* ── Modales / Boîtes de dialogue natives ─────────────────────────────────── */
+dialog.modal {
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-md);
+  max-width: 520px;
+  width: min(92vw, 520px);
+  margin: auto;
+  overflow: hidden;
+}
+
+dialog.modal::backdrop {
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-alt);
+}
+
+/* ── Partage de grille & gestion des membres ────────────────────────────── */
+.share-invite-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.share-invite-form input[type="email"] {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.share-invite-form .select-wrap {
+  flex: 0 0 130px;
+}
+
+.share-members-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.share-members-section .field-label {
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--ink);
+}
+
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.member-name {
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.member-you {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.member-email {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.member-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.member-actions .select-wrap {
+  width: 130px;
+}
+
+.member-actions select {
+  height: 32px;
+  padding: 0 28px 0 10px;
+  font-size: 13px;
+}
+
+.member-actions .select-chevron {
+  right: 8px;
+}
+
+.role-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.role-tag.owner {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent-soft-strong);
+}
+
+.role-tag.editor {
+  background: var(--bg-sunken);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
 @media (max-width: 640px) {
   .btn {
     height: 42px;
@@ -993,6 +1177,15 @@ tr:hover .row-mark,
   }
   .student-form > .btn {
     flex: 1 1 100%;
+  }
+  .share-invite-form {
+    flex-wrap: wrap;
+  }
+  .share-invite-form input[type="email"] {
+    flex: 1 1 100%;
+  }
+  .share-invite-form .select-wrap {
+    flex: 1 1 auto;
   }
   .segmented {
     display: grid;

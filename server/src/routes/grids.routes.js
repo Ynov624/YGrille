@@ -10,4 +10,10 @@ router.put("/:id", ctrl.update);
 router.post("/:id/duplicate", ctrl.duplicate);
 router.delete("/:id", ctrl.remove);
 
+router.get("/:id/members", ctrl.listMembers);
+router.post("/:id/members", ctrl.addMember);
+router.patch("/:id/members/:userId", ctrl.updateMemberRole);
+router.delete("/:id/members/:userId", ctrl.removeMember);
+router.post("/:id/leave", ctrl.leave);
+
 export default router;

@@ -1,13 +1,9 @@
 import { all, get, run, batch } from "../db/connection.js";
 import { notFound } from "../utils/errors.js";
-
-async function assertGridExists(gridId, userId) {
-  const grid = await get("SELECT id FROM grids WHERE id = ? AND user_id = ?", [gridId, userId]);
-  if (!grid) throw notFound("Grille introuvable.");
-}
+import { assertGridAccess } from "./grids.service.js";
 
 export async function listMarks(gridId, userId) {
-  await assertGridExists(gridId, userId);
+  await assertGridAccess(gridId, userId);
   return all(
     `SELECT m.student_id, m.criterion_id, m.level_position, m.comment
      FROM marks m
@@ -23,7 +19,7 @@ export async function listMarks(gridId, userId) {
  * (ou leur valeur par défaut si la note n'existait pas encore).
  */
 export async function setMark(gridId, userId, studentId, criterionId, payload) {
-  await assertGridExists(gridId, userId);
+  await assertGridAccess(gridId, userId);
   const student = await get("SELECT id FROM students WHERE id = ? AND grid_id = ?", [
     studentId,
     gridId,
@@ -64,7 +60,7 @@ export async function setMark(gridId, userId, studentId, criterionId, payload) {
 
 /** Applique le même niveau à tous les membres d'un groupe pour un critère donné (ou désélectionne si null). */
 export async function setGroupMark(gridId, userId, groupId, criterionId, levelPosition) {
-  await assertGridExists(gridId, userId);
+  await assertGridAccess(gridId, userId);
   const group = await get("SELECT id FROM `groups` WHERE id = ? AND grid_id = ?", [
     groupId,
     gridId,

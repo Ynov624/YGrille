@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { fetchGrid } from "../../../api/grids.js";
+import GridShareModal from "../components/GridShareModal.jsx";
 import {
   fetchStudents,
   createStudent,
@@ -19,11 +20,13 @@ import { readCsvFile } from "../../../utils/readCsvFile.js";
 
 export default function GridStudentsPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [grid, setGrid] = useState(null);
   useDocumentTitle(grid ? `Élèves - ${grid.name}` : "Élèves");
   const [students, setStudents] = useState(null);
   const [groups, setGroups] = useState(null);
   const [error, setError] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const [lastName, setLastName] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -187,10 +190,16 @@ export default function GridStudentsPage() {
         title={`Élèves${grid ? ` - ${grid.name}` : ""}`}
         subtitle="Ajoutez des élèves manuellement ou importez un export CSV."
         actions={
-          <Link to="/" className="btn ghost">
-            <Icon name="arrowLeft" />
-            Retour
-          </Link>
+          <>
+            <button type="button" className="btn ghost" onClick={() => setShowShareModal(true)}>
+              <Icon name="userPlus" />
+              Partager
+            </button>
+            <Link to="/" className="btn ghost">
+              <Icon name="arrowLeft" />
+              Retour
+            </Link>
+          </>
         }
       />
 
@@ -486,6 +495,16 @@ export default function GridStudentsPage() {
           </div>
         )}
       </section>
+      {showShareModal && grid && (
+        <GridShareModal
+          gridId={grid.id}
+          gridName={grid.name}
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          currentUserRole={grid.role}
+          onLeftGrid={() => navigate("/")}
+        />
+      )}
     </main>
   );
 }

@@ -42,11 +42,30 @@ CREATE TABLE IF NOT EXISTS email_verification_codes (
 
 CREATE TABLE IF NOT EXISTS grids (
   id         TEXT PRIMARY KEY,
-  user_id    TEXT NOT NULL,
   name       TEXT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS grid_users (
+  grid_id    TEXT NOT NULL,
+  user_id    TEXT NOT NULL,
+  role       TEXT NOT NULL DEFAULT 'owner' CHECK (role IN ('owner', 'editor')),
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (grid_id, user_id),
+  FOREIGN KEY (grid_id) REFERENCES grids(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS idx_grid_users_user ON grid_users(user_id);
+CREATE INDEX IF NOT EXISTS idx_grid_users_grid ON grid_users(grid_id);
+
+CREATE TRIGGER IF NOT EXISTS trg_delete_orphaned_grids
+AFTER DELETE ON grid_users
+BEGIN
+  DELETE FROM grids
+  WHERE id = OLD.grid_id
+    AND NOT EXISTS (SELECT 1 FROM grid_users WHERE grid_id = OLD.grid_id);
+END;
 
 CREATE TABLE IF NOT EXISTS levels (
   id       TEXT PRIMARY KEY,
@@ -129,7 +148,6 @@ CREATE TABLE IF NOT EXISTS marks (
 -- sans ces index, chaque lecture « par grille » et chaque suppression en cascade
 -- parcourt toute la table. (levels/categories sont couverts par leur UNIQUE, marks
 -- par sa clé primaire pour student_id.)
-CREATE INDEX IF NOT EXISTS idx_grids_user ON grids(user_id);
 CREATE INDEX IF NOT EXISTS idx_criteria_grid ON criteria(grid_id);
 CREATE INDEX IF NOT EXISTS idx_criteria_category ON criteria(category_id);
 CREATE INDEX IF NOT EXISTS idx_groups_grid ON `groups`(grid_id);
