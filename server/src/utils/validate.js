@@ -99,6 +99,38 @@ export function validatePromoStudentPayload(body) {
 /** Rôles possibles d'un compte (cf. contrainte CHECK de users.role dans schema.sql). */
 export const ROLES = ["user", "admin"];
 
+/** Rôles possibles pour le partage d'une grille (cf. contrainte CHECK de grid_users.role dans schema.sql). */
+export const GRID_ROLES = ["owner", "editor"];
+
+/** Valide le payload de modification du rôle d'un membre : { role }. */
+export function validateGridMemberRolePayload(body) {
+  const role = body?.role;
+  if (!GRID_ROLES.includes(role)) {
+    throw badRequest("Rôle invalide.", ["Le rôle doit être « owner » ou « editor »."]);
+  }
+  return { role };
+}
+
+/** Valide et normalise le payload d'ajout d'un membre : { email, role? }. */
+export function validateGridMemberPayload(body) {
+  const errors = [];
+  const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  const role = body?.role !== undefined ? body.role : "editor";
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push("Adresse e-mail invalide.");
+  } else if (!email.endsWith("@ynov.com")) {
+    errors.push("Seules les adresses @ynov.com sont autorisées.");
+  }
+
+  if (!GRID_ROLES.includes(role)) {
+    errors.push("Le rôle doit être « owner » ou « editor ».");
+  }
+
+  if (errors.length > 0) throw badRequest("Membre invalide.", errors);
+  return { email, role };
+}
+
 /** Valide le payload de changement de rôle d'un compte : { role }. */
 export function validateRolePayload(body) {
   const role = body?.role;

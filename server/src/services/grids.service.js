@@ -1,25 +1,39 @@
 import { randomUUID } from "node:crypto";
 import { all, get, run, batch } from "../db/connection.js";
-import { notFound } from "../utils/errors.js";
+import { badRequest, forbidden, notFound } from "../utils/errors.js";
+
+/** Vérifie l'accès d'un utilisateur à une grille et retourne son rôle ('owner' | 'editor'). */
+export async function assertGridAccess(gridId, userId, requiredRole = null) {
+  const membership = await get("SELECT role FROM grid_users WHERE grid_id = ? AND user_id = ?", [
+    gridId,
+    userId,
+  ]);
+  if (!membership) throw notFound("Grille introuvable.");
+  if (requiredRole && membership.role !== requiredRole) {
+    throw forbidden("Action réservée au propriétaire de la grille.");
+  }
+  return membership.role;
+}
 
 export async function listGrids(userId) {
   return all(
-    `SELECT g.id, g.name, g.created_at,
+    `SELECT g.id, g.name, g.created_at, gu.role,
+            (SELECT COUNT(*) FROM grid_users WHERE grid_id = g.id) AS members_count,
             (SELECT COUNT(*) FROM criteria c WHERE c.grid_id = g.id) AS criteria_count,
             (SELECT COUNT(*) FROM students s WHERE s.grid_id = g.id) AS students_count
      FROM grids g
-     WHERE g.user_id = ?
+     JOIN grid_users gu ON gu.grid_id = g.id
+     WHERE gu.user_id = ?
      ORDER BY g.created_at DESC`,
     [userId]
   );
 }
 
 export async function getGrid(id, userId) {
-  const grid = await get("SELECT id, name, created_at FROM grids WHERE id = ? AND user_id = ?", [
-    id,
-    userId,
-  ]);
+  const role = await assertGridAccess(id, userId);
+  const grid = await get("SELECT id, name, created_at FROM grids WHERE id = ?", [id]);
   if (!grid) throw notFound("Grille introuvable.");
+
   // Lectures indépendantes lancées en parallèle : chacune est un aller-retour HTTP vers Turso.
   const [levels, categories, criteria] = await Promise.all([
     all("SELECT id, position, label, pct FROM levels WHERE grid_id = ? ORDER BY position", [id]),
@@ -32,6 +46,7 @@ export async function getGrid(id, userId) {
       [id]
     ),
   ]);
+  grid.role = role;
   grid.levels = levels;
   grid.categories = categories;
   grid.criteria = criteria;
@@ -59,13 +74,17 @@ function gridContentsStatements(gridId, payload) {
   return [...levels, ...categories, ...criteria];
 }
 
-/** Création atomique (un seul lot) : grille + niveaux + catégories + critères. */
+/** Création atomique (un seul lot) : grille + membre propriétaire + niveaux + catégories + critères. */
 export async function createGrid(userId, payload) {
   const gridId = randomUUID();
   await batch([
     {
       sql: "INSERT INTO grids (id, user_id, name) VALUES (?, ?, ?)",
       args: [gridId, userId, payload.name],
+    },
+    {
+      sql: "INSERT INTO grid_users (grid_id, user_id, role) VALUES (?, ?, 'owner')",
+      args: [gridId, userId],
     },
     ...gridContentsStatements(gridId, payload),
   ]);
@@ -74,8 +93,7 @@ export async function createGrid(userId, payload) {
 
 /** Mise à jour différentielle atomique : préserve les identifiants et les notes existantes. */
 export async function updateGrid(id, userId, payload) {
-  const existing = await get("SELECT id FROM grids WHERE id = ? AND user_id = ?", [id, userId]);
-  if (!existing) throw notFound("Grille introuvable.");
+  await assertGridAccess(id, userId, "owner");
 
   const [currentCategories, currentCriteria] = await Promise.all([
     all("SELECT id FROM categories WHERE grid_id = ?", [id]),
@@ -191,6 +209,121 @@ export async function duplicateGrid(id, userId) {
 }
 
 export async function deleteGrid(id, userId) {
-  const affectedRows = await run("DELETE FROM grids WHERE id = ? AND user_id = ?", [id, userId]);
-  if (affectedRows === 0) throw notFound("Grille introuvable.");
+  const role = await assertGridAccess(id, userId);
+  if (role === "owner") {
+    await run("DELETE FROM grids WHERE id = ?", [id]);
+  } else {
+    await run("DELETE FROM grid_users WHERE grid_id = ? AND user_id = ?", [id, userId]);
+  }
+}
+
+/** Liste les collaborateurs d'une grille. */
+export async function listGridMembers(gridId, userId) {
+  await assertGridAccess(gridId, userId);
+  return all(
+    `SELECT u.id, u.email, u.name, gu.role, gu.created_at
+     FROM grid_users gu
+     JOIN users u ON u.id = gu.user_id
+     WHERE gu.grid_id = ?
+     ORDER BY
+       CASE gu.role WHEN 'owner' THEN 0 ELSE 1 END,
+       u.name,
+       u.email`,
+    [gridId]
+  );
+}
+
+/** Ajoute un collaborateur à la grille (réservé aux propriétaires). */
+export async function addGridMember(gridId, currentUserId, payload) {
+  await assertGridAccess(gridId, currentUserId, "owner");
+  const user = await get("SELECT id, email, name FROM users WHERE email = ?", [payload.email]);
+  if (!user) {
+    throw badRequest(
+      "Impossible d'ajouter cet utilisateur. Vérifiez l'adresse ou demandez-lui de créer son compte."
+    );
+  }
+  const existing = await get("SELECT role FROM grid_users WHERE grid_id = ? AND user_id = ?", [
+    gridId,
+    user.id,
+  ]);
+  if (existing) {
+    throw badRequest("Cet utilisateur est déjà membre de cette grille.");
+  }
+  await run("INSERT INTO grid_users (grid_id, user_id, role) VALUES (?, ?, ?)", [
+    gridId,
+    user.id,
+    payload.role,
+  ]);
+  return listGridMembers(gridId, currentUserId);
+}
+
+/** Modifie le rôle d'un collaborateur (réservé aux propriétaires, protège le dernier propriétaire). */
+export async function updateGridMemberRole(gridId, currentUserId, targetUserId, payload) {
+  await assertGridAccess(gridId, currentUserId, "owner");
+  const target = await get("SELECT role FROM grid_users WHERE grid_id = ? AND user_id = ?", [
+    gridId,
+    targetUserId,
+  ]);
+  if (!target) throw notFound("Membre introuvable dans cette grille.");
+
+  if (target.role === "owner" && payload.role !== "owner") {
+    const ownerCount = await get(
+      "SELECT COUNT(*) AS count FROM grid_users WHERE grid_id = ? AND role = 'owner'",
+      [gridId]
+    );
+    if (ownerCount.count <= 1) {
+      throw badRequest(
+        "Impossible de rétrograder le seul propriétaire de la grille. Désignez un autre propriétaire au préalable."
+      );
+    }
+  }
+
+  await run("UPDATE grid_users SET role = ? WHERE grid_id = ? AND user_id = ?", [
+    payload.role,
+    gridId,
+    targetUserId,
+  ]);
+  return listGridMembers(gridId, currentUserId);
+}
+
+/** Retire un collaborateur (réservé aux propriétaires ou retrait de soi-même). */
+export async function removeGridMember(gridId, currentUserId, targetUserId) {
+  if (currentUserId === targetUserId) {
+    return leaveGrid(gridId, currentUserId);
+  }
+  await assertGridAccess(gridId, currentUserId, "owner");
+  const target = await get("SELECT role FROM grid_users WHERE grid_id = ? AND user_id = ?", [
+    gridId,
+    targetUserId,
+  ]);
+  if (!target) throw notFound("Membre introuvable dans cette grille.");
+
+  if (target.role === "owner") {
+    const ownerCount = await get(
+      "SELECT COUNT(*) AS count FROM grid_users WHERE grid_id = ? AND role = 'owner'",
+      [gridId]
+    );
+    if (ownerCount.count <= 1) {
+      throw badRequest("Impossible de retirer le seul propriétaire de la grille.");
+    }
+  }
+
+  await run("DELETE FROM grid_users WHERE grid_id = ? AND user_id = ?", [gridId, targetUserId]);
+}
+
+/** Quitte une grille partagée (interdit si seul propriétaire). */
+export async function leaveGrid(gridId, userId) {
+  const role = await assertGridAccess(gridId, userId);
+  if (role === "owner") {
+    const ownerCount = await get(
+      "SELECT COUNT(*) AS count FROM grid_users WHERE grid_id = ? AND role = 'owner'",
+      [gridId]
+    );
+    if (ownerCount.count <= 1) {
+      throw badRequest(
+        "Vous êtes le seul propriétaire de la grille. Désignez un autre propriétaire avant de la quitter ou supprimez-la."
+      );
+    }
+  }
+  await run("DELETE FROM grid_users WHERE grid_id = ? AND user_id = ?", [gridId, userId]);
 }
