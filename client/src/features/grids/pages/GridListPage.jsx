@@ -6,6 +6,7 @@ import {
   createGrid,
   deleteGrid,
   duplicateGrid,
+  leaveGrid,
 } from "../../../api/grids.js";
 import { exportGridJson, parseGridImportFile } from "../jsonTransfer.js";
 import GridShareModal from "../components/GridShareModal.jsx";
@@ -41,10 +42,14 @@ export default function GridListPage() {
       : `Supprimer la grille « ${grid.name} » ? Cette action est irréversible.`;
     if (!window.confirm(msg)) return;
     try {
-      await deleteGrid(grid.id);
+      if (isEditor) {
+        await leaveGrid(grid.id);
+      } else {
+        await deleteGrid(grid.id);
+      }
       setGrids((gs) => gs.filter((g) => g.id !== grid.id));
     } catch (e) {
-      setError(e.message);
+      showError(e);
     }
   };
 

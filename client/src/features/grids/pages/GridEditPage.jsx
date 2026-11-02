@@ -117,6 +117,11 @@ export default function GridEditPage() {
           onClose={() => setShowShareModal(false)}
           currentUserRole={grid.role}
           onLeftGrid={() => navigate("/")}
+          onMembersUpdated={() => {
+            fetchGrid(id)
+              .then(setGrid)
+              .catch((e) => setLoadError(e.message));
+          }}
         />
       )}
     </>

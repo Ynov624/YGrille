@@ -88,10 +88,6 @@ export async function initDatabase() {
     "role",
     "TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin'))"
   );
-  await run(`
-    INSERT OR IGNORE INTO grid_users (grid_id, user_id, role, created_at)
-    SELECT id, user_id, 'owner', created_at FROM grids WHERE user_id IS NOT NULL
-  `);
 }
 
 async function addColumnIfMissing(table, column, definition) {

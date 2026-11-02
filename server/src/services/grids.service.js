@@ -79,8 +79,8 @@ export async function createGrid(userId, payload) {
   const gridId = randomUUID();
   await batch([
     {
-      sql: "INSERT INTO grids (id, user_id, name) VALUES (?, ?, ?)",
-      args: [gridId, userId, payload.name],
+      sql: "INSERT INTO grids (id, name) VALUES (?, ?)",
+      args: [gridId, payload.name],
     },
     {
       sql: "INSERT INTO grid_users (grid_id, user_id, role) VALUES (?, ?, 'owner')",
@@ -209,12 +209,8 @@ export async function duplicateGrid(id, userId) {
 }
 
 export async function deleteGrid(id, userId) {
-  const role = await assertGridAccess(id, userId);
-  if (role === "owner") {
-    await run("DELETE FROM grids WHERE id = ?", [id]);
-  } else {
-    await run("DELETE FROM grid_users WHERE grid_id = ? AND user_id = ?", [id, userId]);
-  }
+  await assertGridAccess(id, userId, "owner");
+  await run("DELETE FROM grids WHERE id = ?", [id]);
 }
 
 /** Liste les collaborateurs d'une grille. */

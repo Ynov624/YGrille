@@ -42,10 +42,8 @@ CREATE TABLE IF NOT EXISTS email_verification_codes (
 
 CREATE TABLE IF NOT EXISTS grids (
   id         TEXT PRIMARY KEY,
-  user_id    TEXT NOT NULL,
   name       TEXT NOT NULL,
-  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS grid_users (
@@ -150,7 +148,6 @@ CREATE TABLE IF NOT EXISTS marks (
 -- sans ces index, chaque lecture « par grille » et chaque suppression en cascade
 -- parcourt toute la table. (levels/categories sont couverts par leur UNIQUE, marks
 -- par sa clé primaire pour student_id.)
-CREATE INDEX IF NOT EXISTS idx_grids_user ON grids(user_id);
 CREATE INDEX IF NOT EXISTS idx_criteria_grid ON criteria(grid_id);
 CREATE INDEX IF NOT EXISTS idx_criteria_category ON criteria(category_id);
 CREATE INDEX IF NOT EXISTS idx_groups_grid ON `groups`(grid_id);

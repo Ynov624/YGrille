@@ -153,7 +153,7 @@ export default function GridShareModal({
       </div>
 
       <div className="modal-footer">
-        {!isOwner && (
+        {(!isOwner || ownerCount > 1) && (
           <button
             type="button"
             className="btn danger small"
