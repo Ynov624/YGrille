@@ -16,3 +16,9 @@ export const updateGridMemberRole = (gridId, userId, payload) =>
 export const removeGridMember = (gridId, userId) =>
   api(`/api/grids/${gridId}/members/${userId}`, { method: "DELETE" });
 export const leaveGrid = (gridId) => api(`/api/grids/${gridId}/leave`, { method: "POST" });
+
+export const fetchActiveLocks = (gridId) => api(`/api/grids/${gridId}/locks`);
+export const acquireLocks = (gridId, keys) =>
+  api(`/api/grids/${gridId}/locks`, { method: "POST", body: { keys } });
+export const releaseLocks = (gridId, keys) =>
+  api(`/api/grids/${gridId}/locks/release`, { method: "POST", body: { keys } });

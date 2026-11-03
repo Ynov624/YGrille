@@ -7,8 +7,8 @@ export const setMark = (gridId, studentId, criterionId, payload) =>
     method: "PUT",
     body: payload,
   });
-export const setGroupMark = (gridId, groupId, criterionId, levelPosition) =>
+export const setGroupMark = (gridId, groupId, criterionId, payload) =>
   api(`/api/grids/${gridId}/marks/group/${groupId}/${criterionId}`, {
     method: "PUT",
-    body: { levelPosition },
+    body: typeof payload === "object" && payload !== null ? payload : { levelPosition: payload },
   });
