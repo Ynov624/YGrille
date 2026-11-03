@@ -57,7 +57,9 @@ YGrille/
 ```text
 users                    (id, email, password_hash, name, role, email_verified_at, created_at, last_login_at)
 email_verification_codes (user_id, code_hash, expires_at, attempts, created_at)
-grids                    (id, user_id, name, created_at)
+grids                    (id, name, created_at)
+grid_users               (grid_id, user_id, role, created_at)
+field_locks              (grid_id, lock_key, user_id, user_name, expires_at)
 levels                   (id, grid_id, position 0..4, label, pct)
 categories               (id, grid_id, position, name, deliverable)
 criteria                 (id, grid_id, category_id, position, name, weight)
@@ -82,12 +84,20 @@ Le client écoute sur [http://localhost:5173](http://localhost:5173) et l'API su
 
 ### Base Turso (production)
 
-La base `ygrille` est sur Turso (`ynov624`, région `aws-eu-west-1`). Appliquez le schéma manuellement à la création et après chaque modification de `schema.sql` :
+La base `ygrille` est sur Turso (`ynov624`, région `aws-eu-west-1`). Pour initialiser une nouvelle base :
 
 ```bash
 TURSO_DATABASE_URL=$(turso db show ygrille --url) \
 TURSO_AUTH_TOKEN=$(turso db tokens create ygrille) \
 npm run db:init -w server
+```
+
+Pour mettre à niveau une base existante lors d'un déploiement :
+
+```bash
+TURSO_DATABASE_URL=$(turso db show ygrille --url) \
+TURSO_AUTH_TOKEN=$(turso db tokens create ygrille) \
+npm run db:migrate -w server
 ```
 
 ### Vercel
@@ -151,11 +161,15 @@ Le client écoute sur [http://localhost](http://localhost).
 
 - [x] Authentification (e-mail et mot de passe, restreint à @ynov.com)
 
-- [ ] Mode clair
+- [x] Thème clair (mode clair / sombre / automatique)
 
 - [x] Duplication de grille
 
 - [x] Service d'authentification JWT et isolation des grilles par utilisateur
+
+- [x] Partage collaboratif de grilles et gestion des rôles (propriétaire et éditeur)
+
+- [x] Verrouillage concurrent en temps réel des champs et critères
 
 - [x] Mot de passe norme CNIL
 

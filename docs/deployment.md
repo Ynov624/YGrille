@@ -55,9 +55,21 @@ Ce fichier configure la distribution. La région `dub1` (Dublin) minimise la lat
 
 Ajoutez ces variables dans Vercel : `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `JWT_SECRET`, `RESEND_API_KEY`, `MAIL_FROM`.
 
-### 3.3. Initialisation du schéma
+### 3.3. Migration obligatoire avant déploiement (instances existantes)
 
-Initialisez la base Turso manuellement :
+Les fonctions serverless Vercel exécutent le serveur sans appliquer automatiquement les migrations de schéma. Lors du déploiement d'une version introduisant des modifications de structure (ex. table de jonction `grid_users`, table `field_locks`), appliquez la migration manuellement sur la base Turso de production avant d'acheminer le trafic :
+
+```bash
+TURSO_DATABASE_URL="libsql://..." \
+TURSO_AUTH_TOKEN="..." \
+npm run db:migrate -w server
+```
+
+> **Attention :** Sans cette étape, le découplage de `grids.user_id` vers `grid_users` rend les grilles existantes invisibles et provoque des erreurs `404/500` lors des requêtes d'évaluation.
+
+### 3.4. Initialisation d'une nouvelle base Turso
+
+Pour un déploiement à blanc (base vide), initialisez le schéma complet :
 
 ```bash
 TURSO_DATABASE_URL=$(turso db show ygrille --url) \
