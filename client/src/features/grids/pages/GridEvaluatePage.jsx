@@ -681,7 +681,7 @@ export default function GridEvaluatePage() {
                           )}
                           <button
                             type="button"
-                            className="btn primary small"
+                            className="btn primary small btn-save-comment"
                             onClick={saveComment}
                             disabled={savingComment || isGeneralLocked}
                           >

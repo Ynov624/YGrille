@@ -18,6 +18,7 @@ export default function GridEditPage() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [structureLockedBy, setStructureLockedBy] = useState(null);
 
   const { activeLocks, acquire, release } = useGridLocks({
     gridId: id,
@@ -33,15 +34,25 @@ export default function GridEditPage() {
 
   useEffect(() => {
     if (!grid || (grid.members_count ?? 1) <= 1 || grid.role !== "owner") return;
-    void acquire(["grid:structure"]);
+    let active = true;
+
+    acquire(["grid:structure"]).then((res) => {
+      if (active && !res?.acquired) {
+        setStructureLockedBy(res?.lockedBy || "un autre utilisateur");
+      }
+    });
+
     return () => {
+      active = false;
       void release(["grid:structure"]);
     };
   }, [grid, acquire, release]);
 
   const structureLock = activeLocks["grid:structure"];
   const isLockedByOther =
-    structureLock && (structureLock.user_id ?? structureLock.userId) !== user?.id;
+    Boolean(structureLockedBy) ||
+    (structureLock && (structureLock.user_id ?? structureLock.userId) !== user?.id);
+  const lockedByName = structureLockedBy || structureLock?.user_name;
 
   const submit = async (payload) => {
     if (isLockedByOther) return;
@@ -109,8 +120,8 @@ export default function GridEditPage() {
             <div className="eval-lock-banner warning" role="alert">
               <Icon name="alert" />
               <span>
-                Cette grille est en cours de modification par {structureLock.user_name}. Vous ne
-                pouvez pas modifier sa structure simultanément.
+                Cette grille est en cours de modification par {lockedByName}. Vous ne pouvez pas
+                modifier sa structure simultanément.
               </span>
             </div>
           ) : null

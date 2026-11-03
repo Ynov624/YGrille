@@ -19,14 +19,17 @@ export function useEvaluationAutoRefresh({ gridId, setGrid, setMarks, setStudent
       if (key.startsWith("eval:student:")) {
         fetchMarks(gridId)
           .then((list) => {
-            const map = {};
-            list.forEach((m) => {
-              map[markKey(m.student_id, m.criterion_id)] = {
-                levelPosition: m.level_position,
-                comment: m.comment,
-              };
+            setMarks((prev) => {
+              const next = { ...prev };
+              list.forEach((m) => {
+                const mapKey = markKey(m.student_id, m.criterion_id);
+                next[mapKey] = {
+                  levelPosition: m.level_position,
+                  comment: m.comment,
+                };
+              });
+              return next;
             });
-            setMarks(map);
           })
           .catch(() => {});
         if (key.endsWith(":general")) {

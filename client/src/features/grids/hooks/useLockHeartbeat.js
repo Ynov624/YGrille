@@ -8,7 +8,7 @@ export function useLockHeartbeat({ gridId, heldKeysRef, enabled, onStatusChange 
   useEffect(() => {
     if (!enabled || !gridId) return;
 
-    const interval = setInterval(async () => {
+    const renew = async () => {
       if (heldKeysRef.current.size === 0 || document.hidden) return;
       const keys = Array.from(heldKeysRef.current);
       try {
@@ -17,8 +17,20 @@ export function useLockHeartbeat({ gridId, heldKeysRef, enabled, onStatusChange 
       } catch {
         onStatusChange(true);
       }
-    }, 45_000);
+    };
 
-    return () => clearInterval(interval);
+    const interval = setInterval(renew, 45_000);
+
+    const handleVisibility = () => {
+      if (!document.hidden && heldKeysRef.current.size > 0) {
+        void renew();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [enabled, gridId, heldKeysRef, onStatusChange]);
 }

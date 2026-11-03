@@ -37,7 +37,8 @@ export function useGeneralCommentLock({
     generalAcquiredRef.current = true;
   };
 
-  const handleGeneralBlur = () => {
+  const handleGeneralBlur = (e) => {
+    if (e?.relatedTarget?.closest(".btn-save-comment")) return;
     if (generalAcquiredRef.current) {
       generalAcquiredRef.current = false;
       void release(generalKeys);

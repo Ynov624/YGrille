@@ -1,6 +1,6 @@
 import { all, run, batch } from "../db/connection.js";
 import { assertGridAccess } from "./grids.service.js";
-import { locked } from "../utils/errors.js";
+import { forbidden, locked } from "../utils/errors.js";
 
 /**
  * Retourne la liste des verrous actifs d'une grille (expires_at > Date.now()).
@@ -24,8 +24,12 @@ export async function listActiveLocks(gridId, userId) {
  * Si un conflit intervient (TOCTOU), l'opération est rejetée sans verrou partiel.
  */
 export async function acquireOrRenewLocks(gridId, keys, userId, userName, ttlSeconds = 90) {
-  await assertGridAccess(gridId, userId);
-  if (!keys || !keys.length) return { acquired: true, expiresAt: 0 };
+  const role = await assertGridAccess(gridId, userId);
+  if (!keys?.length) return { acquired: true, expiresAt: 0 };
+
+  if (keys.includes("grid:structure") && role !== "owner") {
+    throw forbidden("Action réservée au propriétaire de la grille.");
+  }
 
   const now = Date.now();
   const expiresAt = now + ttlSeconds * 1000;
@@ -67,8 +71,11 @@ export async function acquireOrRenewLocks(gridId, keys, userId, userName, ttlSec
   // Vérifier qu'aucune instruction n'a échoué suite à une concurrence TOCTOU
   const hasConflict = results.some((r) => r.rowsAffected === 0);
   if (hasConflict) {
-    // Annuler/libérer les clés éventuellement acquises dans ce lot
-    await releaseLocks(gridId, keys, userId);
+    // Annuler uniquement les clés qui ont été insérées ou mises à jour dans ce lot
+    await run(
+      `DELETE FROM field_locks WHERE grid_id = ? AND user_id = ? AND expires_at = ? AND lock_key IN (${placeholders})`,
+      [gridId, userId, expiresAt, ...keys]
+    );
     return { acquired: false, lockedBy: "Un collaborateur", expiresAt: 0 };
   }
 
@@ -79,7 +86,7 @@ export async function acquireOrRenewLocks(gridId, keys, userId, userName, ttlSec
  * Libère explicitement un ensemble de verrous détenus par l'utilisateur courant.
  */
 export async function releaseLocks(gridId, keys, userId) {
-  if (!keys || !keys.length) return;
+  if (!keys?.length) return;
   const placeholders = keys.map(() => "?").join(",");
   await run(
     `DELETE FROM field_locks WHERE grid_id = ? AND user_id = ? AND lock_key IN (${placeholders})`,
@@ -92,7 +99,7 @@ export async function releaseLocks(gridId, keys, userId) {
  * Inclut automatiquement "grid:structure" pour suspendre les évaluations pendant la modification du barème.
  */
 export async function assertLockPermitted(gridId, keys, userId) {
-  if (!keys || !keys.length) return;
+  if (!keys?.length) return;
   const now = Date.now();
   const allKeys = keys.includes("grid:structure") ? keys : [...keys, "grid:structure"];
   const placeholders = allKeys.map(() => "?").join(",");

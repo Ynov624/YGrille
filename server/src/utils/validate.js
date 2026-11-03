@@ -176,3 +176,22 @@ export function validateMarkPayload(body) {
   if (errors.length > 0) throw badRequest("Note invalide.", errors);
   return result;
 }
+
+/**
+ * Valide et normalise une liste de clés de verrouillage (maximum 50, longueur max 128).
+ */
+export function validateLockKeysPayload(keys) {
+  if (!Array.isArray(keys) || keys.length === 0) {
+    throw badRequest("Clés de verrouillage manquantes.");
+  }
+  if (keys.length > 50) {
+    throw badRequest("Trop de clés demandées (maximum 50).");
+  }
+  const clean = keys
+    .filter((k) => typeof k === "string" && k.trim().length > 0 && k.length <= 128)
+    .map((k) => k.trim());
+  if (clean.length === 0) {
+    throw badRequest("Clés de verrouillage invalides.");
+  }
+  return clean;
+}

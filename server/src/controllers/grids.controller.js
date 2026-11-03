@@ -4,6 +4,7 @@ import {
   validateGridPayload,
   validateGridMemberPayload,
   validateGridMemberRolePayload,
+  validateLockKeysPayload,
 } from "../utils/validate.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -78,14 +79,19 @@ function extractLockKeys(req) {
 }
 
 export const acquireLocks = asyncHandler(async (req, res) => {
-  const keys = extractLockKeys(req).filter((k) => typeof k === "string" && k.trim().length > 0);
+  const keys = validateLockKeysPayload(extractLockKeys(req));
   const userName = req.user.name?.trim() || req.user.email.split("@")[0];
   const result = await locks.acquireOrRenewLocks(req.params.id, keys, req.user.id, userName);
   res.json(result);
 });
 
 export const releaseLocks = asyncHandler(async (req, res) => {
-  const keys = extractLockKeys(req).filter((k) => typeof k === "string" && k.trim().length > 0);
+  const rawKeys = extractLockKeys(req);
+  if (rawKeys.length === 0) {
+    res.status(204).end();
+    return;
+  }
+  const keys = validateLockKeysPayload(rawKeys);
   await locks.releaseLocks(req.params.id, keys, req.user.id);
   res.status(204).end();
 });
