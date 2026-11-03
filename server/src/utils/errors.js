@@ -10,3 +10,4 @@ export class AppError extends Error {
 export const badRequest = (message, details, code) => new AppError(400, message, details, code);
 export const forbidden = (message = "Accès refusé.") => new AppError(403, message);
 export const notFound = (message = "Ressource introuvable.") => new AppError(404, message);
+export const locked = (message = "Ressource verrouillée.") => new AppError(423, message);

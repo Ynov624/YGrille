@@ -144,6 +144,21 @@ CREATE TABLE IF NOT EXISTS marks (
   FOREIGN KEY (criterion_id) REFERENCES criteria(id) ON DELETE CASCADE
 );
 
+-- Verrous de concurrence temps réel
+-- expires_at stocké en millisecondes epoch (INTEGER) pour éviter tout bug de format texte.
+CREATE TABLE IF NOT EXISTS field_locks (
+  grid_id    TEXT NOT NULL,
+  lock_key   TEXT NOT NULL,
+  user_id    TEXT NOT NULL,
+  user_name  TEXT NOT NULL,
+  expires_at INTEGER NOT NULL,
+  PRIMARY KEY (grid_id, lock_key),
+  FOREIGN KEY (grid_id) REFERENCES grids(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_field_locks_expiry ON field_locks(grid_id, expires_at);
+
 -- Contrairement à InnoDB, SQLite n'indexe pas automatiquement les clés étrangères :
 -- sans ces index, chaque lecture « par grille » et chaque suppression en cascade
 -- parcourt toute la table. (levels/categories sont couverts par leur UNIQUE, marks
