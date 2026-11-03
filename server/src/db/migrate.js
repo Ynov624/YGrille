@@ -68,6 +68,24 @@ async function migrate() {
     console.log("grids table is already using modern schema (no user_id column).");
   }
 
+  // 3. Assurer la création de la table field_locks et de ses index
+  console.log("Ensuring field_locks table and indexes exist...");
+  await run(`
+    CREATE TABLE IF NOT EXISTS field_locks (
+      grid_id    TEXT NOT NULL,
+      lock_key   TEXT NOT NULL,
+      user_id    TEXT NOT NULL,
+      user_name  TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      PRIMARY KEY (grid_id, lock_key),
+      FOREIGN KEY (grid_id) REFERENCES grids(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+  await run(
+    "CREATE INDEX IF NOT EXISTS idx_field_locks_expiry ON field_locks(grid_id, expires_at)"
+  );
+
   console.log("Migration complete.");
   process.exit(0);
 }

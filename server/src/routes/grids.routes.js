@@ -16,4 +16,9 @@ router.patch("/:id/members/:userId", ctrl.updateMemberRole);
 router.delete("/:id/members/:userId", ctrl.removeMember);
 router.post("/:id/leave", ctrl.leave);
 
+router.get("/:id/locks", ctrl.listLocks);
+router.post("/:id/locks", ctrl.acquireLocks);
+router.post("/:id/locks/release", ctrl.releaseLocks);
+router.delete("/:id/locks/:lockKey", ctrl.releaseLocks);
+
 export default router;

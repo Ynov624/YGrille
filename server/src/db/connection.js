@@ -70,8 +70,8 @@ export async function run(sql, args = []) {
  * bavardes en HTTP : les UUID étant générés côté serveur, chaque lot est connu d'avance.
  */
 export async function batch(statements) {
-  if (statements.length === 0) return;
-  await (await getClient()).batch(statements, "write");
+  if (statements.length === 0) return [];
+  return (await getClient()).batch(statements, "write");
 }
 
 /**

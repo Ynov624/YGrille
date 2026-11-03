@@ -1,5 +1,5 @@
 import * as marks from "../services/marks.service.js";
-import { validateMarkPayload, validateGroupMarkPayload } from "../utils/validate.js";
+import { validateMarkPayload } from "../utils/validate.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const list = asyncHandler(async (req, res) => {
@@ -20,14 +20,14 @@ export const setMark = asyncHandler(async (req, res) => {
 });
 
 export const setGroupMark = asyncHandler(async (req, res) => {
-  const { levelPosition } = validateGroupMarkPayload(req.body);
+  const payload = validateMarkPayload(req.body);
   res.json(
     await marks.setGroupMark(
       req.params.gridId,
       req.user.id,
       req.params.groupId,
       req.params.criterionId,
-      levelPosition
+      payload
     )
   );
 });

@@ -18,6 +18,8 @@ export default function GridForm({
   errors,
   onSubmit,
   actions,
+  banner,
+  disabled,
 }) {
   useDocumentTitle(title);
   const [name, setName] = useState(initial.name);
@@ -75,6 +77,8 @@ export default function GridForm({
           )
         }
       />
+
+      {banner}
 
       <form onSubmit={submit}>
         <section className="section">
@@ -145,7 +149,7 @@ export default function GridForm({
               </ul>
             </div>
           )}
-          <button type="submit" className="btn primary" disabled={saving}>
+          <button type="submit" className="btn primary" disabled={saving || disabled}>
             {saving ? "Enregistrement…" : submitLabel}
           </button>
         </div>

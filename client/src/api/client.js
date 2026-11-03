@@ -5,6 +5,10 @@ export function setAuthToken(token) {
   authToken = token;
 }
 
+export function getAuthToken() {
+  return authToken;
+}
+
 /** Petit wrapper fetch : JSON, erreurs normalisées ({ error, details }). */
 export async function api(path, options = {}) {
   const res = await fetch(path, {

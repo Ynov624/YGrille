@@ -140,18 +140,6 @@ export function validateRolePayload(body) {
   return { role };
 }
 
-/** Valide le payload de saisie d'une note de groupe : { levelPosition } (entier 0..4 ou null pour désélectionner). */
-export function validateGroupMarkPayload(body) {
-  if (body?.levelPosition === null) {
-    return { levelPosition: null };
-  }
-  const levelPosition = Number(body?.levelPosition);
-  if (!Number.isInteger(levelPosition) || levelPosition < 0 || levelPosition > 4) {
-    throw badRequest("Note invalide.", ["Le niveau doit être un entier entre 0 et 4 ou null."]);
-  }
-  return { levelPosition };
-}
-
 /**
  * Valide le payload de mise à jour (partielle) d'une note individuelle :
  * { levelPosition?, comment? }. Au moins un champ doit être fourni ; les champs
@@ -187,4 +175,23 @@ export function validateMarkPayload(body) {
 
   if (errors.length > 0) throw badRequest("Note invalide.", errors);
   return result;
+}
+
+/**
+ * Valide et normalise une liste de clés de verrouillage (maximum 50, longueur max 128).
+ */
+export function validateLockKeysPayload(keys) {
+  if (!Array.isArray(keys) || keys.length === 0) {
+    throw badRequest("Clés de verrouillage manquantes.");
+  }
+  if (keys.length > 50) {
+    throw badRequest("Trop de clés demandées (maximum 50).");
+  }
+  const clean = keys
+    .filter((k) => typeof k === "string" && k.trim().length > 0 && k.length <= 128)
+    .map((k) => k.trim());
+  if (clean.length === 0) {
+    throw badRequest("Clés de verrouillage invalides.");
+  }
+  return clean;
 }

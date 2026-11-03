@@ -1157,6 +1157,63 @@ dialog.modal::backdrop {
   border: 1px solid var(--border);
 }
 
+/* ── Verrouillage de champs & concurrence ──────────────────────────────── */
+.lock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-alt);
+  border: 1px solid var(--border-strong);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 550;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.lock-pill .icon {
+  color: var(--accent);
+}
+
+.eval-crit-block.is-locked {
+  opacity: 0.85;
+  background: var(--surface-alt);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+
+.eval-crit-block.is-locked .level-picker {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.eval-lock-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border-strong);
+  color: var(--ink);
+}
+
+.eval-lock-banner.warning {
+  background: var(--warn-soft);
+  border: 1px solid rgba(249, 115, 22, 0.28);
+  color: var(--warn-ink);
+}
+
+.eval-lock-banner .icon {
+  flex-shrink: 0;
+  color: var(--warn);
+}
+
 @media (max-width: 640px) {
   .btn {
     height: 42px;

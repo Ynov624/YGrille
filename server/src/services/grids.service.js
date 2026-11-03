@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { all, get, run, batch } from "../db/connection.js";
 import { badRequest, forbidden, notFound } from "../utils/errors.js";
+import { assertLockPermitted } from "./locks.service.js";
 
 /** Vérifie l'accès d'un utilisateur à une grille et retourne son rôle ('owner' | 'editor'). */
 export async function assertGridAccess(gridId, userId, requiredRole = null) {
@@ -31,7 +32,12 @@ export async function listGrids(userId) {
 
 export async function getGrid(id, userId) {
   const role = await assertGridAccess(id, userId);
-  const grid = await get("SELECT id, name, created_at FROM grids WHERE id = ?", [id]);
+  const grid = await get(
+    `SELECT id, name, created_at,
+            (SELECT COUNT(*) FROM grid_users WHERE grid_id = grids.id) AS members_count
+     FROM grids WHERE id = ?`,
+    [id]
+  );
   if (!grid) throw notFound("Grille introuvable.");
 
   // Lectures indépendantes lancées en parallèle : chacune est un aller-retour HTTP vers Turso.
@@ -47,6 +53,7 @@ export async function getGrid(id, userId) {
     ),
   ]);
   grid.role = role;
+  grid.members_count = Number(grid.members_count) || 1;
   grid.levels = levels;
   grid.categories = categories;
   grid.criteria = criteria;
@@ -94,6 +101,7 @@ export async function createGrid(userId, payload) {
 /** Mise à jour différentielle atomique : préserve les identifiants et les notes existantes. */
 export async function updateGrid(id, userId, payload) {
   await assertGridAccess(id, userId, "owner");
+  await assertLockPermitted(id, ["grid:structure"], userId);
 
   const [currentCategories, currentCriteria] = await Promise.all([
     all("SELECT id FROM categories WHERE grid_id = ?", [id]),
