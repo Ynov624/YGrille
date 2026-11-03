@@ -16,6 +16,18 @@ export function getGeneralCommentLockKeys(mode, current, members = []) {
   return members.map((m) => `eval:student:${m.id}:general`);
 }
 
+export function getStoredGeneralComment(mode, current, members = []) {
+  if (mode === "individuel") {
+    return current?.comment ?? "";
+  }
+  if (!members.length) {
+    return "";
+  }
+  const firstComment = members[0].comment ?? "";
+  const allMatch = members.every((m) => (m.comment ?? "") === firstComment);
+  return allMatch ? firstComment : "";
+}
+
 /**
  * Recherche un conflit actif dans les verrous pour les clés données.
  * Vérifie également si un verrou 'grid:structure' est actif par un tiers.

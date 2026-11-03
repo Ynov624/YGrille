@@ -3,13 +3,17 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { fetchGrid } from "../../../api/grids.js";
 import GridShareModal from "../components/GridShareModal.jsx";
 import { fetchStudents, updateStudent as updateStudentApi } from "../../../api/students.js";
-import { fetchGroups } from "../../../api/groups.js";
+import { fetchGroups, updateGroupComment as updateGroupCommentApi } from "../../../api/groups.js";
 import {
   fetchMarks,
   setMark as setMarkApi,
   setGroupMark as setGroupMarkApi,
 } from "../../../api/marks.js";
 import LevelPicker from "../components/LevelPicker.jsx";
+import CriterionComment from "../components/CriterionComment.jsx";
+import LockIndicator from "../components/LockIndicator.jsx";
+import EvaluationLockBanners from "../components/EvaluationLockBanners.jsx";
+import { useEvaluationLocks, getStoredGeneralComment } from "../hooks/useEvaluationLocks.js";
 import { LEVEL_COLORS } from "../defaults.js";
 import {
   computeGrade,
@@ -35,33 +39,6 @@ function initialsFor(entity, mode) {
     return `${entity.first_name?.[0] ?? ""}${entity.last_name?.[0] ?? ""}`.toUpperCase();
   }
   return (entity.name ?? "").slice(0, 2).toUpperCase();
-}
-
-/** Appréciation d'un critère, pour l'élève (ou le groupe) sélectionné. */
-function CriterionComment({ entry, onSetComment }) {
-  const storedComment = entry?.comment ?? "";
-  const [commentDraft, setCommentDraft] = useState(storedComment);
-  const [prevStored, setPrevStored] = useState(storedComment);
-
-  if (prevStored !== storedComment) {
-    setPrevStored(storedComment);
-    setCommentDraft(storedComment);
-  }
-
-  const commitComment = () => {
-    if (commentDraft !== storedComment) onSetComment(commentDraft);
-  };
-
-  return (
-    <input
-      className="eval-crit-comment"
-      type="text"
-      placeholder="Appréciation du critère…"
-      value={commentDraft}
-      onChange={(e) => setCommentDraft(e.target.value)}
-      onBlur={commitComment}
-    />
-  );
 }
 
 /** En-tête façon tableau : Critère / Niveaux / Points. */
@@ -137,6 +114,28 @@ export default function GridEvaluatePage() {
   const members =
     mode === "groupe" && current ? (students ?? []).filter((s) => s.group_id === current.id) : [];
 
+  const {
+    structureConflict,
+    heartbeatFailed,
+    isGeneralLocked,
+    generalConflict,
+    handleGeneralFocus,
+    handleGeneralBlur,
+    releaseGeneralComment,
+    getCriterionLock,
+  } = useEvaluationLocks({
+    gridId: id,
+    grid,
+    setGrid,
+    mode,
+    current,
+    members,
+    setMarks,
+    setStudents,
+    setError,
+    setComment,
+  });
+
   const goPrev = () => setIndex((i) => Math.max(0, i - 1));
   const goNext = () => setIndex((i) => Math.min((list?.length ?? 1) - 1, i + 1));
 
@@ -144,13 +143,19 @@ export default function GridEvaluatePage() {
   const currentKey = current ? `${mode}:${current.id}` : null;
   if (currentKey !== prevEntityKey) {
     setPrevEntityKey(currentKey);
-    setComment(mode === "individuel" ? (current?.comment ?? "") : "");
+    setComment(getStoredGeneralComment(mode, current, members));
   }
 
   const groupCriterionValue = (criterionId, memberIds) => {
     if (!memberIds || memberIds.length === 0) return null;
     const values = memberIds.map((sid) => marks[markKey(sid, criterionId)]?.levelPosition ?? null);
     return values.every((v) => v === values[0]) ? values[0] : null;
+  };
+
+  const groupCriterionComment = (criterionId, memberIds) => {
+    if (!memberIds || memberIds.length === 0) return "";
+    const comments = memberIds.map((sid) => marks[markKey(sid, criterionId)]?.comment ?? "");
+    return comments.every((c) => c === comments[0]) ? comments[0] : "";
   };
 
   const memberIdsOf = (groupId) =>
@@ -182,7 +187,7 @@ export default function GridEvaluatePage() {
   };
 
   const saveComment = async () => {
-    if (!current) return;
+    if (!current || isGeneralLocked) return;
     setSavingComment(true);
     setError(null);
     try {
@@ -194,13 +199,10 @@ export default function GridEvaluatePage() {
         });
         setStudents((list) => list.map((s) => (s.id === current.id ? updated : s)));
       } else {
-        const updated = await Promise.all(
-          members.map((m) =>
-            updateStudentApi(id, m.id, { lastName: m.last_name, firstName: m.first_name, comment })
-          )
-        );
-        setStudents((list) => list.map((s) => updated.find((u) => u.id === s.id) ?? s));
+        await updateGroupCommentApi(id, current.id, comment);
+        setStudents((list) => list.map((s) => (s.group_id === current.id ? { ...s, comment } : s)));
       }
+      releaseGeneralComment();
     } catch (err) {
       setError(err.details?.length ? err.details.join(" ") : err.message);
     } finally {
@@ -246,18 +248,17 @@ export default function GridEvaluatePage() {
     }
   };
 
-  const updateGroupCriterionComment = async (criterionId, comment) => {
+  const updateGroupCriterionComment = async (criterionId, cmt) => {
     setError(null);
     try {
-      const updated = await Promise.all(
-        members.map((m) => setMarkApi(id, m.id, criterionId, { comment }))
-      );
+      await setGroupMarkApi(id, current.id, criterionId, { comment: cmt });
       setMarks((prev) => {
         const next = { ...prev };
-        updated.forEach((u) => {
-          next[markKey(u.studentId, u.criterionId)] = {
-            levelPosition: u.levelPosition,
-            comment: u.comment,
+        members.forEach((m) => {
+          const key = markKey(m.id, criterionId);
+          next[key] = {
+            levelPosition: next[key]?.levelPosition ?? null,
+            comment: cmt,
           };
         });
         return next;
@@ -361,6 +362,11 @@ export default function GridEvaluatePage() {
           <p>{error}</p>
         </div>
       )}
+
+      <EvaluationLockBanners
+        structureConflict={structureConflict}
+        heartbeatFailed={heartbeatFailed}
+      />
 
       {students.length === 0 ? (
         <EmptyState
@@ -524,10 +530,18 @@ export default function GridEvaluatePage() {
                           )}
                         </div>
                         {catCriteria.map((c) => {
+                          const { isLocked, conflict, onFocusLock, onBlurLock } = getCriterionLock(
+                            c.id
+                          );
                           const entry =
                             mode === "individuel"
                               ? (marks[markKey(current.id, c.id)] ?? null)
-                              : null;
+                              : {
+                                  comment: groupCriterionComment(
+                                    c.id,
+                                    members.map((m) => m.id)
+                                  ),
+                                };
                           const activeLevel =
                             mode === "individuel"
                               ? (entry?.levelPosition ?? null)
@@ -540,13 +554,19 @@ export default function GridEvaluatePage() {
                               ? criterionPoints(c, activeLevel, grid.levels)
                               : null;
                           return (
-                            <div key={c.id} className="eval-crit-block">
+                            <div
+                              key={c.id}
+                              className={`eval-crit-block${isLocked ? " is-locked" : ""}`}
+                            >
                               <div className="eval-crit-row">
-                                <span className="eval-crit-name">{c.name}</span>
+                                <span className="eval-crit-name">
+                                  {c.name}
+                                  {conflict && <LockIndicator userName={conflict.user_name} />}
+                                </span>
                                 <LevelPicker
                                   levels={grid.levels}
                                   value={activeLevel}
-                                  disabled={mode === "groupe" && members.length === 0}
+                                  disabled={isLocked || (mode === "groupe" && members.length === 0)}
                                   onChange={(pos) =>
                                     mode === "individuel"
                                       ? updateStudentMark(current.id, c.id, pos)
@@ -560,6 +580,9 @@ export default function GridEvaluatePage() {
                               <CriterionComment
                                 criterion={c}
                                 entry={entry}
+                                disabled={isLocked}
+                                onFocusLock={onFocusLock}
+                                onBlurLock={onBlurLock}
                                 onSetComment={(txt) =>
                                   mode === "individuel"
                                     ? updateCriterionComment(current.id, c.id, txt)
@@ -598,7 +621,12 @@ export default function GridEvaluatePage() {
                       </div>
                       <div className="eval-grade-comment">
                         <label className="field">
-                          <span>Appréciation</span>
+                          <span>
+                            Appréciation
+                            {generalConflict && (
+                              <LockIndicator userName={generalConflict.user_name} />
+                            )}
+                          </span>
                           <textarea
                             rows={3}
                             value={comment}
@@ -606,7 +634,10 @@ export default function GridEvaluatePage() {
                               suggestAppreciation(grade.grade20) ||
                               "Aucun critère évalué pour l'instant."
                             }
+                            disabled={isGeneralLocked}
                             onChange={(e) => setComment(e.target.value)}
+                            onFocus={handleGeneralFocus}
+                            onBlur={handleGeneralBlur}
                           />
                         </label>
                         {!grade.complete && (
@@ -632,7 +663,7 @@ export default function GridEvaluatePage() {
                             type="button"
                             className="btn text small"
                             onClick={() => setComment(suggestAppreciation(grade.grade20))}
-                            disabled={grade.grade20 === null}
+                            disabled={grade.grade20 === null || isGeneralLocked}
                           >
                             <Icon name="bulb" />
                             Utiliser la suggestion
@@ -652,7 +683,7 @@ export default function GridEvaluatePage() {
                             type="button"
                             className="btn primary small"
                             onClick={saveComment}
-                            disabled={savingComment}
+                            disabled={savingComment || isGeneralLocked}
                           >
                             {savingComment ? "Enregistrement…" : "Enregistrer l'appréciation"}
                           </button>

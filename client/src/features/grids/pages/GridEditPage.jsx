@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { fetchGrid, updateGrid } from "../../../api/grids.js";
+import { useAuth } from "../../../auth/AuthContext.jsx";
+import { useGridLocks } from "../hooks/useGridLocks.js";
 import GridForm from "../components/GridForm.jsx";
 import GridShareModal from "../components/GridShareModal.jsx";
 import Loading from "../../../components/Loading.jsx";
@@ -10,11 +12,18 @@ import Icon from "../../../components/Icon.jsx";
 export default function GridEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [grid, setGrid] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
+
+  const { activeLocks, acquire, release } = useGridLocks({
+    gridId: id,
+    membersCount: grid?.members_count ?? 1,
+    currentUserId: user?.id,
+  });
 
   useEffect(() => {
     fetchGrid(id)
@@ -22,11 +31,25 @@ export default function GridEditPage() {
       .catch((e) => setLoadError(e.message));
   }, [id]);
 
+  useEffect(() => {
+    if (!grid || (grid.members_count ?? 1) <= 1 || grid.role !== "owner") return;
+    void acquire(["grid:structure"]);
+    return () => {
+      void release(["grid:structure"]);
+    };
+  }, [grid, acquire, release]);
+
+  const structureLock = activeLocks["grid:structure"];
+  const isLockedByOther =
+    structureLock && (structureLock.user_id ?? structureLock.userId) !== user?.id;
+
   const submit = async (payload) => {
+    if (isLockedByOther) return;
     setSaving(true);
     setErrors(null);
     try {
       await updateGrid(id, payload);
+      await release(["grid:structure"]);
       navigate("/");
     } catch (err) {
       setErrors(err.details?.length ? err.details : [err.message]);
@@ -80,6 +103,18 @@ export default function GridEditPage() {
         subtitle="Ajustez les critères, leur pondération et le barème des niveaux."
         submitLabel="Enregistrer les modifications"
         saving={saving}
+        disabled={isLockedByOther}
+        banner={
+          isLockedByOther ? (
+            <div className="eval-lock-banner warning" role="alert">
+              <Icon name="alert" />
+              <span>
+                Cette grille est en cours de modification par {structureLock.user_name}. Vous ne
+                pouvez pas modifier sa structure simultanément.
+              </span>
+            </div>
+          ) : null
+        }
         errors={errors}
         onSubmit={submit}
         actions={
