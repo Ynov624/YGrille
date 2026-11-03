@@ -140,18 +140,6 @@ export function validateRolePayload(body) {
   return { role };
 }
 
-/** Valide le payload de saisie d'une note de groupe : { levelPosition } (entier 0..4 ou null pour désélectionner). */
-export function validateGroupMarkPayload(body) {
-  if (body?.levelPosition === null) {
-    return { levelPosition: null };
-  }
-  const levelPosition = Number(body?.levelPosition);
-  if (!Number.isInteger(levelPosition) || levelPosition < 0 || levelPosition > 4) {
-    throw badRequest("Note invalide.", ["Le niveau doit être un entier entre 0 et 4 ou null."]);
-  }
-  return { levelPosition };
-}
-
 /**
  * Valide le payload de mise à jour (partielle) d'une note individuelle :
  * { levelPosition?, comment? }. Au moins un champ doit être fourni ; les champs

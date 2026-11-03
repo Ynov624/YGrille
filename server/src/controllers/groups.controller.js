@@ -1,4 +1,5 @@
 import * as groups from "../services/groups.service.js";
+import * as students from "../services/students.service.js";
 import { badRequest } from "../utils/errors.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -15,4 +16,11 @@ export const create = asyncHandler(async (req, res) => {
 export const remove = asyncHandler(async (req, res) => {
   await groups.deleteGroup(req.params.gridId, req.user.id, req.params.id);
   res.status(204).end();
+});
+
+export const setComment = asyncHandler(async (req, res) => {
+  const comment = typeof req.body?.comment === "string" ? req.body.comment.trim() : "";
+  res.json(
+    await students.updateGroupComment(req.params.gridId, req.user.id, req.params.id, comment)
+  );
 });
