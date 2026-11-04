@@ -6,4 +6,6 @@ import "dotenv/config";
 import { initDatabase } from "./connection.js";
 
 await initDatabase();
-console.log(`[db] schéma appliqué sur ${process.env.TURSO_DATABASE_URL || "la base locale (server/data/ygrille.db)"}`);
+console.log(
+  `[db] schéma appliqué sur ${process.env.TURSO_DATABASE_URL || "la base locale (server/data/ygrille.db)"}`
+);

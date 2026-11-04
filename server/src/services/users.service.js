@@ -24,10 +24,12 @@ export async function registerUser({ email, password, name }) {
   }
   const id = randomUUID();
   const passwordHash = bcrypt.hashSync(password, SALT_ROUNDS);
-  await run(
-    "INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)",
-    [id, email, passwordHash, name]
-  );
+  await run("INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)", [
+    id,
+    email,
+    passwordHash,
+    name,
+  ]);
   return toPublicUser({ id, email, name });
 }
 

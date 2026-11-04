@@ -1,7 +1,13 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import JSZip from "jszip";
-import { computeGrade, computeCategoryGrades, criterionPoints, formatGrade, formatPoints } from "./grade.js";
+import {
+  computeGrade,
+  computeCategoryGrades,
+  criterionPoints,
+  formatGrade,
+  formatPoints,
+} from "./grade.js";
 import { LEVEL_COLORS } from "./defaults.js";
 import { triggerBlobDownload, sanitizeFileName } from "./download.js";
 
@@ -74,7 +80,9 @@ export function buildStudentPdf(grid, student, getMark) {
   doc.setTextColor(...ACCENT_RGB);
   doc.setFontSize(28);
   doc.setFont(undefined, "bold");
-  doc.text(`${formatGrade(overall.grade20)} / 20`, PAGE_WIDTH - MARGIN_X, y + 4, { align: "right" });
+  doc.text(`${formatGrade(overall.grade20)} / 20`, PAGE_WIDTH - MARGIN_X, y + 4, {
+    align: "right",
+  });
 
   y += 14;
   doc.setDrawColor(...BORDER_RGB);
@@ -95,7 +103,12 @@ export function buildStudentPdf(grid, student, getMark) {
     doc.setFont(undefined, "bold");
     doc.text(cat.name, MARGIN_X + 4, y);
     doc.setTextColor(...ACCENT_RGB);
-    doc.text(`${formatPoints(catGrade?.earnedPoints)} / ${catGrade?.totalWeight ?? 0}`, PAGE_WIDTH - MARGIN_X, y, { align: "right" });
+    doc.text(
+      `${formatPoints(catGrade?.earnedPoints)} / ${catGrade?.totalWeight ?? 0}`,
+      PAGE_WIDTH - MARGIN_X,
+      y,
+      { align: "right" }
+    );
     y += 3;
     if (cat.deliverable) {
       y += 4.5;
@@ -119,8 +132,19 @@ export function buildStudentPdf(grid, student, getMark) {
       head: [["Critère", "Niveau", "Points", "Appréciation"]],
       body: rows.map((r) => [r.criterion.name, r.label, r.pointsText, r.entry?.comment || ""]),
       theme: "grid",
-      styles: { fontSize: 10, cellPadding: 2.6, textColor: INK_RGB, lineColor: BORDER_RGB, lineWidth: 0.2 },
-      headStyles: { fillColor: ACCENT_RGB, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 10 },
+      styles: {
+        fontSize: 10,
+        cellPadding: 2.6,
+        textColor: INK_RGB,
+        lineColor: BORDER_RGB,
+        lineWidth: 0.2,
+      },
+      headStyles: {
+        fillColor: ACCENT_RGB,
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 10,
+      },
       alternateRowStyles: { fillColor: [247, 248, 251] },
       columnStyles: {
         0: { cellWidth: 62, fontStyle: "bold" },
@@ -220,7 +244,9 @@ export function buildBlankGridPdf(grid) {
     doc.text(cat.name, MARGIN_X + 4, y);
     doc.setTextColor(...MUTED_RGB);
     doc.setFont(undefined, "normal");
-    doc.text(`${totalWeight} pt${totalWeight > 1 ? "s" : ""} au total`, PAGE_WIDTH - MARGIN_X, y, { align: "right" });
+    doc.text(`${totalWeight} pt${totalWeight > 1 ? "s" : ""} au total`, PAGE_WIDTH - MARGIN_X, y, {
+      align: "right",
+    });
     y += 3;
     if (cat.deliverable) {
       y += 4.5;
@@ -235,8 +261,20 @@ export function buildBlankGridPdf(grid) {
       head: [["Critère", "Niveau", "Points", "Appréciation"]],
       body: catCriteria.map((c) => [c.name, "", "", ""]),
       theme: "grid",
-      styles: { fontSize: 10, cellPadding: 2.6, minCellHeight: 9, textColor: INK_RGB, lineColor: BORDER_RGB, lineWidth: 0.2 },
-      headStyles: { fillColor: ACCENT_RGB, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 10 },
+      styles: {
+        fontSize: 10,
+        cellPadding: 2.6,
+        minCellHeight: 9,
+        textColor: INK_RGB,
+        lineColor: BORDER_RGB,
+        lineWidth: 0.2,
+      },
+      headStyles: {
+        fillColor: ACCENT_RGB,
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 10,
+      },
       alternateRowStyles: { fillColor: [247, 248, 251] },
       columnStyles: {
         0: { cellWidth: 62, fontStyle: "bold" },
@@ -261,7 +299,9 @@ export function exportBlankGridPdf(grid) {
 export async function exportAllStudentsZip(grid, students, getMarkFor) {
   const zip = new JSZip();
   students.forEach((student) => {
-    const doc = buildStudentPdf(grid, student, (criterionId) => getMarkFor(student.id, criterionId));
+    const doc = buildStudentPdf(grid, student, (criterionId) =>
+      getMarkFor(student.id, criterionId)
+    );
     zip.file(fileNameFor(grid, student), doc.output("blob"));
   });
   const content = await zip.generateAsync({ type: "blob" });

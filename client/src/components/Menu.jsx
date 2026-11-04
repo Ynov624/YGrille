@@ -56,18 +56,20 @@ export default function Menu({ label = "Actions", children }) {
       >
         <Icon name="more" size={18} />
       </button>
-      {open && pos && createPortal(
-        <div
-          ref={popoverRef}
-          className="menu-popover"
-          role="menu"
-          style={{ top: pos.top, right: pos.right }}
-          onClick={() => setOpen(false)}
-        >
-          {children}
-        </div>,
-        document.body
-      )}
+      {open &&
+        pos &&
+        createPortal(
+          <div
+            ref={popoverRef}
+            className="menu-popover"
+            role="menu"
+            style={{ top: pos.top, right: pos.right }}
+            onClick={() => setOpen(false)}
+          >
+            {children}
+          </div>,
+          document.body
+        )}
     </>
   );
 }

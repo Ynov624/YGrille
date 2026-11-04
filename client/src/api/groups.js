@@ -7,3 +7,5 @@ export const deleteGroup = (gridId, id) =>
   api(`/api/grids/${gridId}/groups/${id}`, { method: "DELETE" });
 export const setStudentGroup = (gridId, studentId, groupId) =>
   api(`/api/grids/${gridId}/students/${studentId}/group`, { method: "PUT", body: { groupId } });
+export const updateGroupComment = (gridId, groupId, comment) =>
+  api(`/api/grids/${gridId}/groups/${groupId}/comment`, { method: "PUT", body: { comment } });

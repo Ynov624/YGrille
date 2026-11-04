@@ -38,7 +38,9 @@ async function startServer() {
 
   const serverDir = path.join(__dirname, "..", "server", "src");
   const { createApp } = await import(pathToFileURL(path.join(serverDir, "app.js")).href);
-  const { initDatabase } = await import(pathToFileURL(path.join(serverDir, "db", "connection.js")).href);
+  const { initDatabase } = await import(
+    pathToFileURL(path.join(serverDir, "db", "connection.js")).href
+  );
 
   await initDatabase();
   const expressApp = createApp();

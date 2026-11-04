@@ -19,12 +19,23 @@ let clientPromise = null;
  * fonctions serverless de Vercel ; le client Node complet n'est chargé que pour un
  * fichier local.
  */
+export function resetDbClient() {
+  clientPromise = null;
+}
+
 function getClient() {
   clientPromise ??= createDbClient();
   return clientPromise;
 }
 
 async function createDbClient() {
+  if (process.env.NODE_ENV === "test" || process.env.SQLITE_DB_PATH) {
+    const path = process.env.SQLITE_DB_PATH || "file::memory:";
+    const url = path.startsWith("file:") ? path : `file:${path}`;
+    const { createClient } = await import("@libsql/client");
+    return createClient({ url });
+  }
+
   const url = process.env.TURSO_DATABASE_URL;
   if (url) {
     const { createClient } = await import("@libsql/client/web");
@@ -33,11 +44,17 @@ async function createDbClient() {
   if (process.env.VERCEL) {
     // Sur Vercel le système de fichiers est en lecture seule : sans ce garde-fou, l'oubli de
     // la variable se traduirait par un ENOENT obscur sur server/data au lieu de la nommer.
-    throw new Error("TURSO_DATABASE_URL manquant : à définir dans les variables d'environnement du projet Vercel.");
+    throw new Error(
+      "TURSO_DATABASE_URL manquant : à définir dans les variables d'environnement du projet Vercel."
+    );
   }
   mkdirSync(dirname(LOCAL_DB_PATH), { recursive: true });
   const { createClient } = await import("@libsql/client");
   return createClient({ url: `file:${LOCAL_DB_PATH}` });
+}
+
+export async function executeMultiple(sql) {
+  return (await getClient()).executeMultiple(sql);
 }
 
 /** Toutes les lignes d'une requête, en objets simples `{ colonne: valeur }`. */
@@ -68,8 +85,8 @@ export async function run(sql, args = []) {
  * bavardes en HTTP : les UUID étant générés côté serveur, chaque lot est connu d'avance.
  */
 export async function batch(statements) {
-  if (statements.length === 0) return;
-  await (await getClient()).batch(statements, "write");
+  if (statements.length === 0) return [];
+  return (await getClient()).batch(statements, "write");
 }
 
 /**
@@ -81,7 +98,11 @@ export async function initDatabase() {
   const schema = readFileSync(join(here, "schema.sql"), "utf-8");
   await (await getClient()).executeMultiple(schema);
   // Même définition que dans schema.sql.
-  await addColumnIfMissing("users", "role", "TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin'))");
+  await addColumnIfMissing(
+    "users",
+    "role",
+    "TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin'))"
+  );
 }
 
 async function addColumnIfMissing(table, column, definition) {

@@ -4,27 +4,27 @@ Ce guide détaille les variables d'environnement, les modes d'exécution, l'init
 
 ## 1. Variables d'Environnement
 
-* `JWT_SECRET` : Obligatoire (production). Signe et vérifie les jetons JWT. Le changer déconnecte tous les utilisateurs.
+- `JWT_SECRET` : Obligatoire (production). Signe et vérifie les jetons JWT. Le changer déconnecte tous les utilisateurs.
 
-* `TURSO_DATABASE_URL` : Obligatoire (production). URL de la base libSQL (`libsql://...`) ou chemin SQLite local (`file:...`).
+- `TURSO_DATABASE_URL` : Obligatoire (production). URL de la base libSQL (`libsql://...`) ou chemin SQLite local (`file:...`).
 
-* `TURSO_AUTH_TOKEN` : Jeton d'authentification Turso.
+- `TURSO_AUTH_TOKEN` : Jeton d'authentification Turso.
 
-* `RESEND_API_KEY` : Obligatoire (production). Clé d'API Resend pour expédier les e-mails.
+- `RESEND_API_KEY` : Obligatoire (production). Clé d'API Resend pour expédier les e-mails.
 
-* `MAIL_FROM` : Adresse de l'expéditeur (ex: `"onboarding@resend.dev"`).
+- `MAIL_FROM` : Adresse de l'expéditeur (ex: `"onboarding@resend.dev"`).
 
-* `PORT` : Port du serveur Express (défaut: `3001`).
+- `PORT` : Port du serveur Express (défaut: `3001`).
 
-* `CLIENT_DIST` : Chemin absolu vers le dossier de build du client statique.
+- `CLIENT_DIST` : Chemin absolu vers le dossier de build du client statique.
 
 ## 2. Développement Local
 
 ### 2.1. Prérequis
 
-* Node.js 20.x ou supérieur.
+- Node.js 20.x ou supérieur.
 
-* npm 10.x ou supérieur.
+- npm 10.x ou supérieur.
 
 ### 2.2. Installation et démarrage
 
@@ -55,9 +55,21 @@ Ce fichier configure la distribution. La région `dub1` (Dublin) minimise la lat
 
 Ajoutez ces variables dans Vercel : `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `JWT_SECRET`, `RESEND_API_KEY`, `MAIL_FROM`.
 
-### 3.3. Initialisation du schéma
+### 3.3. Migration obligatoire avant déploiement (instances existantes)
 
-Initialisez la base Turso manuellement :
+Les fonctions serverless Vercel exécutent le serveur sans appliquer automatiquement les migrations de schéma. Lors du déploiement d'une version introduisant des modifications de structure (ex. table de jonction `grid_users`, table `field_locks`), appliquez la migration manuellement sur la base Turso de production avant d'acheminer le trafic :
+
+```bash
+TURSO_DATABASE_URL="libsql://..." \
+TURSO_AUTH_TOKEN="..." \
+npm run db:migrate -w server
+```
+
+> **Attention :** Sans cette étape, le découplage de `grids.user_id` vers `grid_users` rend les grilles existantes invisibles et provoque des erreurs `404/500` lors des requêtes d'évaluation.
+
+### 3.4. Initialisation d'une nouvelle base Turso
+
+Pour un déploiement à blanc (base vide), initialisez le schéma complet :
 
 ```bash
 TURSO_DATABASE_URL=$(turso db show ygrille --url) \
@@ -69,9 +81,9 @@ npm run db:init -w server
 
 Le fichier `docker-compose.yml` auto-héberge l'application.
 
-* **`client`** : Nginx sert les fichiers statiques et redirige `/api/` vers le backend.
+- **`client`** : Nginx sert les fichiers statiques et redirige `/api/` vers le backend.
 
-* **`server`** : Node.js exécute le serveur Express.
+- **`server`** : Node.js exécute le serveur Express.
 
 1. Créez le fichier d'environnement : `cp .env.example .env`.
 

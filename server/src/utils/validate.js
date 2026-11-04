@@ -33,15 +33,17 @@ export function validateGridPayload(body) {
   const categories = Array.isArray(body?.categories) ? body.categories : [];
   if (categories.length === 0) errors.push("Ajoutez au moins une catégorie.");
   const cleanCategories = categories.map((cat, i) => {
+    const cid = typeof cat?.id === "string" ? cat.id.trim() : null;
     const cname = typeof cat?.name === "string" ? cat.name.trim() : "";
     const deliverable = typeof cat?.deliverable === "string" ? cat.deliverable.trim() : "";
     if (!cname) errors.push(`La catégorie ${i + 1} doit avoir un nom.`);
-    return { name: cname, deliverable };
+    return { id: cid || undefined, name: cname, deliverable };
   });
 
   const criteria = Array.isArray(body?.criteria) ? body.criteria : [];
   if (criteria.length === 0) errors.push("Ajoutez au moins un critère.");
   const cleanCriteria = criteria.map((c, i) => {
+    const crid = typeof c?.id === "string" ? c.id.trim() : null;
     const cname = typeof c?.name === "string" ? c.name.trim() : "";
     const weight = Number(c?.weight);
     const categoryIndex = Number.isInteger(c?.categoryIndex) ? c.categoryIndex : -1;
@@ -52,7 +54,7 @@ export function validateGridPayload(body) {
     if (categoryIndex < 0 || categoryIndex >= cleanCategories.length) {
       errors.push(`Le critère ${i + 1} doit être rattaché à une catégorie.`);
     }
-    return { name: cname, weight, categoryIndex };
+    return { id: crid || undefined, name: cname, weight, categoryIndex };
   });
   if (cleanCriteria.length > 0 && cleanCriteria.reduce((s, c) => s + (c.weight || 0), 0) <= 0) {
     errors.push("La somme des points des critères doit être supérieure à 0.");
@@ -97,6 +99,38 @@ export function validatePromoStudentPayload(body) {
 /** Rôles possibles d'un compte (cf. contrainte CHECK de users.role dans schema.sql). */
 export const ROLES = ["user", "admin"];
 
+/** Rôles possibles pour le partage d'une grille (cf. contrainte CHECK de grid_users.role dans schema.sql). */
+export const GRID_ROLES = ["owner", "editor"];
+
+/** Valide le payload de modification du rôle d'un membre : { role }. */
+export function validateGridMemberRolePayload(body) {
+  const role = body?.role;
+  if (!GRID_ROLES.includes(role)) {
+    throw badRequest("Rôle invalide.", ["Le rôle doit être « owner » ou « editor »."]);
+  }
+  return { role };
+}
+
+/** Valide et normalise le payload d'ajout d'un membre : { email, role? }. */
+export function validateGridMemberPayload(body) {
+  const errors = [];
+  const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  const role = body?.role !== undefined ? body.role : "editor";
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push("Adresse e-mail invalide.");
+  } else if (!email.endsWith("@ynov.com")) {
+    errors.push("Seules les adresses @ynov.com sont autorisées.");
+  }
+
+  if (!GRID_ROLES.includes(role)) {
+    errors.push("Le rôle doit être « owner » ou « editor ».");
+  }
+
+  if (errors.length > 0) throw badRequest("Membre invalide.", errors);
+  return { email, role };
+}
+
 /** Valide le payload de changement de rôle d'un compte : { role }. */
 export function validateRolePayload(body) {
   const role = body?.role;
@@ -106,32 +140,28 @@ export function validateRolePayload(body) {
   return { role };
 }
 
-/** Valide le payload de saisie d'une note de groupe : { levelPosition } (entier 0..4). */
-export function validateGroupMarkPayload(body) {
-  const levelPosition = Number(body?.levelPosition);
-  if (!Number.isInteger(levelPosition) || levelPosition < 0 || levelPosition > 4) {
-    throw badRequest("Note invalide.", ["Le niveau doit être un entier entre 0 et 4."]);
-  }
-  return { levelPosition };
-}
-
 /**
  * Valide le payload de mise à jour (partielle) d'une note individuelle :
  * { levelPosition?, comment? }. Au moins un champ doit être fourni ; les champs
  * absents conservent leur valeur existante (cf. marks.service.js). Les points
  * ne se saisissent pas : ils sont dérivés automatiquement du niveau (poids ×
- * barème du niveau), comme la note de catégorie.
+ * barème du niveau), comme la note de catégorie. levelPosition peut valoir null
+ * pour désélectionner le critère.
  */
 export function validateMarkPayload(body) {
   const errors = [];
   const result = {};
 
   if (body?.levelPosition !== undefined) {
-    const levelPosition = Number(body.levelPosition);
-    if (!Number.isInteger(levelPosition) || levelPosition < 0 || levelPosition > 4) {
-      errors.push("Le niveau doit être un entier entre 0 et 4.");
+    if (body.levelPosition === null) {
+      result.levelPosition = null;
     } else {
-      result.levelPosition = levelPosition;
+      const levelPosition = Number(body.levelPosition);
+      if (!Number.isInteger(levelPosition) || levelPosition < 0 || levelPosition > 4) {
+        errors.push("Le niveau doit être un entier entre 0 et 4 ou null.");
+      } else {
+        result.levelPosition = levelPosition;
+      }
     }
   }
 
@@ -145,4 +175,23 @@ export function validateMarkPayload(body) {
 
   if (errors.length > 0) throw badRequest("Note invalide.", errors);
   return result;
+}
+
+/**
+ * Valide et normalise une liste de clés de verrouillage (maximum 50, longueur max 128).
+ */
+export function validateLockKeysPayload(keys) {
+  if (!Array.isArray(keys) || keys.length === 0) {
+    throw badRequest("Clés de verrouillage manquantes.");
+  }
+  if (keys.length > 50) {
+    throw badRequest("Trop de clés demandées (maximum 50).");
+  }
+  const clean = keys
+    .filter((k) => typeof k === "string" && k.trim().length > 0 && k.length <= 128)
+    .map((k) => k.trim());
+  if (clean.length === 0) {
+    throw badRequest("Clés de verrouillage invalides.");
+  }
+  return clean;
 }

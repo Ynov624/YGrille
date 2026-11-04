@@ -21,7 +21,9 @@ export const importCsv = asyncHandler(async (req, res) => {
 export const importFromPromo = asyncHandler(async (req, res) => {
   const promoId = typeof req.body?.promoId === "string" ? req.body.promoId : "";
   if (!promoId) throw badRequest("Promo invalide.", ["promoId est obligatoire."]);
-  res.status(201).json(await students.importStudentsFromPromo(req.params.gridId, req.user.id, promoId));
+  res
+    .status(201)
+    .json(await students.importStudentsFromPromo(req.params.gridId, req.user.id, promoId));
 });
 
 export const update = asyncHandler(async (req, res) => {
@@ -35,6 +37,7 @@ export const remove = asyncHandler(async (req, res) => {
 });
 
 export const setGroup = asyncHandler(async (req, res) => {
-  const groupId = typeof req.body?.groupId === "string" && req.body.groupId ? req.body.groupId : null;
+  const groupId =
+    typeof req.body?.groupId === "string" && req.body.groupId ? req.body.groupId : null;
   res.json(await students.setStudentGroup(req.params.gridId, req.user.id, req.params.id, groupId));
 });

@@ -49,7 +49,9 @@ export function createApp() {
   // Gestion centralisée des erreurs
   app.use((err, _req, res, _next) => {
     if (err instanceof AppError) {
-      return res.status(err.status).json({ error: err.message, details: err.details, code: err.code });
+      return res
+        .status(err.status)
+        .json({ error: err.message, details: err.details, code: err.code });
     }
     console.error(err);
     res.status(500).json({ error: "Erreur interne du serveur." });

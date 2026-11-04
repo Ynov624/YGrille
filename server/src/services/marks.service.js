@@ -1,13 +1,10 @@
 import { all, get, run, batch } from "../db/connection.js";
 import { notFound } from "../utils/errors.js";
-
-async function assertGridExists(gridId, userId) {
-  const grid = await get("SELECT id FROM grids WHERE id = ? AND user_id = ?", [gridId, userId]);
-  if (!grid) throw notFound("Grille introuvable.");
-}
+import { assertGridAccess } from "./grids.service.js";
+import { assertLockPermitted } from "./locks.service.js";
 
 export async function listMarks(gridId, userId) {
-  await assertGridExists(gridId, userId);
+  await assertGridAccess(gridId, userId);
   return all(
     `SELECT m.student_id, m.criterion_id, m.level_position, m.comment
      FROM marks m
@@ -23,19 +20,36 @@ export async function listMarks(gridId, userId) {
  * (ou leur valeur par défaut si la note n'existait pas encore).
  */
 export async function setMark(gridId, userId, studentId, criterionId, payload) {
-  await assertGridExists(gridId, userId);
-  const student = await get("SELECT id FROM students WHERE id = ? AND grid_id = ?", [studentId, gridId]);
+  await assertGridAccess(gridId, userId);
+  await assertLockPermitted(gridId, ["eval:student:" + studentId + ":crit:" + criterionId], userId);
+
+  const student = await get("SELECT id FROM students WHERE id = ? AND grid_id = ?", [
+    studentId,
+    gridId,
+  ]);
   if (!student) throw notFound("Élève introuvable dans cette grille.");
-  const criterion = await get("SELECT id FROM criteria WHERE id = ? AND grid_id = ?", [criterionId, gridId]);
+  const criterion = await get("SELECT id FROM criteria WHERE id = ? AND grid_id = ?", [
+    criterionId,
+    gridId,
+  ]);
   if (!criterion) throw notFound("Critère introuvable dans cette grille.");
+
+  if (payload.levelPosition === null) {
+    await run("DELETE FROM marks WHERE student_id = ? AND criterion_id = ?", [
+      studentId,
+      criterionId,
+    ]);
+    return { studentId, criterionId, levelPosition: null, comment: "" };
+  }
 
   const current = await get(
     "SELECT level_position, comment FROM marks WHERE student_id = ? AND criterion_id = ?",
     [studentId, criterionId]
   );
 
-  const levelPosition = payload.levelPosition !== undefined ? payload.levelPosition : current?.level_position ?? 0;
-  const comment = payload.comment !== undefined ? payload.comment : current?.comment ?? "";
+  const levelPosition =
+    payload.levelPosition !== undefined ? payload.levelPosition : (current?.level_position ?? 0);
+  const comment = payload.comment !== undefined ? payload.comment : (current?.comment ?? "");
 
   await run(
     `INSERT INTO marks (student_id, criterion_id, level_position, comment) VALUES (?, ?, ?, ?)
@@ -47,22 +61,55 @@ export async function setMark(gridId, userId, studentId, criterionId, payload) {
   return { studentId, criterionId, levelPosition, comment };
 }
 
-/** Applique le même niveau à tous les membres d'un groupe pour un critère donné. */
-export async function setGroupMark(gridId, userId, groupId, criterionId, levelPosition) {
-  await assertGridExists(gridId, userId);
-  const group = await get("SELECT id FROM `groups` WHERE id = ? AND grid_id = ?", [groupId, gridId]);
+function buildGroupMarkStatements(members, criterionId, { levelPosition, comment }) {
+  if (levelPosition === null) {
+    return members.map((m) => ({
+      sql: "DELETE FROM marks WHERE student_id = ? AND criterion_id = ?",
+      args: [m.id, criterionId],
+    }));
+  }
+
+  const updateClause = [
+    levelPosition !== undefined ? "level_position = excluded.level_position" : null,
+    comment !== undefined ? "comment = excluded.comment" : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const sql = `INSERT INTO marks (student_id, criterion_id, level_position, comment) VALUES (?, ?, ?, ?)
+               ON CONFLICT (student_id, criterion_id) DO UPDATE SET ${updateClause}`;
+
+  return members.map((m) => ({
+    sql,
+    args: [m.id, criterionId, levelPosition ?? 0, comment ?? ""],
+  }));
+}
+
+/** Applique un niveau et/ou une appréciation à tous les membres d'un groupe pour un critère donné. */
+export async function setGroupMark(gridId, userId, groupId, criterionId, payload) {
+  await assertGridAccess(gridId, userId);
+  const normalized =
+    typeof payload === "number" || payload === null ? { levelPosition: payload } : (payload ?? {});
+
+  const [group, criterion, members] = await Promise.all([
+    get("SELECT id FROM `groups` WHERE id = ? AND grid_id = ?", [groupId, gridId]),
+    get("SELECT id FROM criteria WHERE id = ? AND grid_id = ?", [criterionId, gridId]),
+    all("SELECT id FROM students WHERE group_id = ? AND grid_id = ?", [groupId, gridId]),
+  ]);
+
   if (!group) throw notFound("Groupe introuvable dans cette grille.");
-  const criterion = await get("SELECT id FROM criteria WHERE id = ? AND grid_id = ?", [criterionId, gridId]);
   if (!criterion) throw notFound("Critère introuvable dans cette grille.");
+  if (members.length === 0) return { groupId, criterionId, studentIds: [] };
 
-  const members = await all("SELECT id FROM students WHERE group_id = ?", [groupId]);
-  await batch(
-    members.map((m) => ({
-      sql: `INSERT INTO marks (student_id, criterion_id, level_position) VALUES (?, ?, ?)
-            ON CONFLICT (student_id, criterion_id) DO UPDATE SET level_position = excluded.level_position`,
-      args: [m.id, criterionId, levelPosition],
-    }))
-  );
+  const memberKeys = members.map((m) => "eval:student:" + m.id + ":crit:" + criterionId);
+  await assertLockPermitted(gridId, memberKeys, userId);
 
-  return { groupId, criterionId, levelPosition, studentIds: members.map((m) => m.id) };
+  await batch(buildGroupMarkStatements(members, criterionId, normalized));
+
+  return {
+    groupId,
+    criterionId,
+    ...(normalized.levelPosition === null ? { levelPosition: null, comment: "" } : normalized),
+    studentIds: members.map((m) => m.id),
+  };
 }

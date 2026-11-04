@@ -14,11 +14,11 @@ export default function LevelPicker({ value, onChange, levels, disabled }) {
             type="button"
             className={`level-cell${selected ? " selected" : ""}`}
             style={{ "--level": color }}
-            title={label}
-            aria-label={label}
+            title={selected ? `${label} (cliquer pour désélectionner)` : label}
+            aria-label={selected ? `${label} (sélectionné, cliquer pour désélectionner)` : label}
             aria-pressed={selected}
             disabled={disabled}
-            onClick={() => onChange(pos)}
+            onClick={() => onChange(selected ? null : pos)}
           >
             <span className="level-cell-mark" aria-hidden="true">
               {selected && <Icon name="check" size={12} strokeWidth="3" />}

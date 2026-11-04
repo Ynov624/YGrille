@@ -30,7 +30,9 @@ export async function issueVerificationCode(userId, email) {
     await sendVerificationCodeEmail(email, code);
   } catch (err) {
     if (process.env.NODE_ENV === "production") throw err;
-    console.warn(`[dev] Envoi de l'e-mail impossible (${err.message}) — code pour ${email} : ${code}`);
+    console.warn(
+      `[dev] Envoi de l'e-mail impossible (${err.message}) — code pour ${email} : ${code}`
+    );
   }
 }
 
@@ -39,7 +41,9 @@ export async function verifyCode(userId, code) {
   const row = await get("SELECT * FROM email_verification_codes WHERE user_id = ?", [userId]);
 
   if (!row) {
-    throw badRequest("Vérification invalide.", ["Aucun code en attente pour ce compte. Demande un nouveau code."]);
+    throw badRequest("Vérification invalide.", [
+      "Aucun code en attente pour ce compte. Demande un nouveau code.",
+    ]);
   }
   if (row.attempts >= MAX_ATTEMPTS) {
     throw badRequest("Vérification invalide.", ["Trop de tentatives. Demande un nouveau code."]);
@@ -48,7 +52,9 @@ export async function verifyCode(userId, code) {
     throw badRequest("Vérification invalide.", ["Ce code a expiré. Demande un nouveau code."]);
   }
   if (!bcrypt.compareSync(code, row.code_hash)) {
-    await run("UPDATE email_verification_codes SET attempts = attempts + 1 WHERE user_id = ?", [userId]);
+    await run("UPDATE email_verification_codes SET attempts = attempts + 1 WHERE user_id = ?", [
+      userId,
+    ]);
     throw badRequest("Vérification invalide.", ["Code incorrect."]);
   }
 

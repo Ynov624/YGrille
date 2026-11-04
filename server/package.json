@@ -6,6 +6,7 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "db:init": "node src/db/init.js",
+    "db:migrate": "node src/db/migrate.js",
     "user:role": "node src/db/setRole.js"
   },
   "dependencies": {
