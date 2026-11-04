@@ -54,7 +54,7 @@ export function useEvaluationLocks({
     setComment,
   });
 
-  const getCriterionLock = useCriterionRowLock({
+  const { getCriterionLock, releaseActiveCriterion } = useCriterionRowLock({
     mode,
     current,
     members,
@@ -69,6 +69,7 @@ export function useEvaluationLocks({
     structureConflict,
     heartbeatFailed,
     getCriterionLock,
+    releaseActiveCriterion,
     pollLocks,
     setActiveLocks,
     ...generalLock,

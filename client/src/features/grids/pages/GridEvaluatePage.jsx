@@ -119,10 +119,11 @@ export default function GridEvaluatePage() {
     heartbeatFailed,
     isGeneralLocked,
     generalConflict,
-    handleGeneralFocus,
+    handleGeneralFocus: baseHandleGeneralFocus,
     handleGeneralBlur,
     releaseGeneralComment,
     getCriterionLock,
+    releaseActiveCriterion,
     pollLocks,
     setActiveLocks,
   } = useEvaluationLocks({
@@ -136,6 +137,11 @@ export default function GridEvaluatePage() {
     setStudents,
     setComment,
   });
+
+  const handleGeneralFocus = (e) => {
+    releaseActiveCriterion?.();
+    baseHandleGeneralFocus(e);
+  };
 
   const goPrev = () => setIndex((i) => Math.max(0, i - 1));
   const goNext = () => setIndex((i) => Math.min((list?.length ?? 1) - 1, i + 1));
@@ -254,6 +260,18 @@ export default function GridEvaluatePage() {
     applyMarkUpdate(studentId, criterionId, { levelPosition });
   const updateCriterionComment = (studentId, criterionId, comment) =>
     applyMarkUpdate(studentId, criterionId, { comment });
+
+  const handleLevelChange = async (criterionId, pos, activate) => {
+    if (activate) {
+      const ok = await activate();
+      if (!ok) return;
+    }
+    if (mode === "individuel") {
+      await updateStudentMark(current.id, criterionId, pos);
+    } else {
+      await updateGroupMark(current.id, criterionId, pos);
+    }
+  };
 
   const updateGroupMark = async (groupId, criterionId, levelPosition) => {
     setError(null);
@@ -556,9 +574,8 @@ export default function GridEvaluatePage() {
                           )}
                         </div>
                         {catCriteria.map((c) => {
-                          const { isLocked, conflict, onFocusLock, onBlurLock } = getCriterionLock(
-                            c.id
-                          );
+                          const { isLocked, conflict, onFocusLock, onBlurLock, activateCriterion } =
+                            getCriterionLock(c.id);
                           const entry =
                             mode === "individuel"
                               ? (marks[markKey(current.id, c.id)] ?? null)
@@ -594,9 +611,7 @@ export default function GridEvaluatePage() {
                                   value={activeLevel}
                                   disabled={isLocked || (mode === "groupe" && members.length === 0)}
                                   onChange={(pos) =>
-                                    mode === "individuel"
-                                      ? updateStudentMark(current.id, c.id, pos)
-                                      : updateGroupMark(current.id, c.id, pos)
+                                    handleLevelChange(c.id, pos, activateCriterion)
                                   }
                                 />
                                 <span className="eval-crit-points">
