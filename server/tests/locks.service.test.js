@@ -7,7 +7,7 @@ import {
   releaseLocks,
   assertLockPermitted,
 } from "../src/services/locks.service.js";
-import { all, run } from "../src/db/connection.js";
+import { all, get, run } from "../src/db/connection.js";
 
 describe("locks.service", () => {
   let db;
@@ -102,6 +102,40 @@ describe("locks.service", () => {
       assert.equal(attempt.acquired, false);
       assert.equal(attempt.lockedBy, "Owner User");
       assert.ok(attempt.expiresAt > Date.now());
+    });
+
+    it("executes compensation rollback when batch encounters a TOCTOU collision", async () => {
+      // Simulate concurrent race: when k1 is inserted in the batch, another collaborator locks k2
+      await run(`
+        CREATE TRIGGER race_sim AFTER INSERT ON field_locks
+        WHEN NEW.lock_key = 'k1'
+        BEGIN
+          INSERT INTO field_locks (grid_id, lock_key, user_id, user_name, expires_at)
+          VALUES ('grid-1', 'k2', 'u-editor', 'Editor User', NEW.expires_at + 60000);
+        END
+      `);
+
+      try {
+        const res = await acquireOrRenewLocks("grid-1", ["k1", "k2"], "u-owner", "Owner User", 90);
+        assert.equal(res.acquired, false);
+        assert.equal(res.lockedBy, "Un collaborateur");
+
+        // k1 must have been rolled back because the batch failed
+        const k1Check = await all("SELECT * FROM field_locks WHERE grid_id = ? AND lock_key = ?", [
+          "grid-1",
+          "k1",
+        ]);
+        assert.equal(k1Check.length, 0);
+
+        // k2 must remain held by u-editor
+        const k2Check = await get(
+          "SELECT user_id FROM field_locks WHERE grid_id = ? AND lock_key = ?",
+          ["grid-1", "k2"]
+        );
+        assert.equal(k2Check.user_id, "u-editor");
+      } finally {
+        await run("DROP TRIGGER IF EXISTS race_sim");
+      }
     });
 
     it("preserves pre-existing locks when batch acquisition fails (non-destructive rollback)", async () => {

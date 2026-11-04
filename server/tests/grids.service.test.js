@@ -171,6 +171,15 @@ describe("grids.service (sharing & authorization)", () => {
       assert.equal(remaining.length, 1);
       assert.equal(remaining[0].user_id, "u-owner");
     });
+
+    it("delegates to leaveGrid when member removes self", async () => {
+      await removeGridMember("grid-1", "u-editor", "u-editor");
+      const member = await get("SELECT * FROM grid_users WHERE grid_id = ? AND user_id = ?", [
+        "grid-1",
+        "u-editor",
+      ]);
+      assert.equal(member, undefined);
+    });
   });
 
   describe("leaveGrid", () => {

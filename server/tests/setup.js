@@ -8,8 +8,6 @@ const here = dirname(fileURLToPath(import.meta.url));
 export async function setupTestDatabase() {
   process.env.NODE_ENV = "test";
   process.env.SQLITE_DB_PATH = "file::memory:";
-  delete process.env.TURSO_DATABASE_URL;
-  delete process.env.TURSO_AUTH_TOKEN;
 
   resetDbClient();
 

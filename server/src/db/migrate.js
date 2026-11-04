@@ -2,8 +2,11 @@ import "dotenv/config";
 import { pathToFileURL } from "node:url";
 import { all, run } from "./connection.js";
 
-export async function migrate() {
-  console.log("Starting database migration...");
+export async function migrate(options = {}) {
+  const silent = options.silent ?? process.env.NODE_ENV === "test";
+  const log = silent ? () => {} : console.log;
+
+  log("Starting database migration...");
 
   // 1. Assurer la création de la table grid_users
   await run(`
@@ -26,14 +29,14 @@ export async function migrate() {
   const hasUserId = columns.some((c) => c.name === "user_id");
 
   if (hasUserId) {
-    console.log("Backfilling grid_users from grids.user_id...");
+    log("Backfilling grid_users from grids.user_id...");
     const backfilled = await run(`
       INSERT OR IGNORE INTO grid_users (grid_id, user_id, role, created_at)
       SELECT id, user_id, 'owner', created_at FROM grids WHERE user_id IS NOT NULL
     `);
-    console.log(`Backfilled rows: ${backfilled}`);
+    log(`Backfilled rows: ${backfilled}`);
 
-    console.log("Rebuilding grids table without user_id and creator cascade...");
+    log("Rebuilding grids table without user_id and creator cascade...");
     await run("PRAGMA foreign_keys = OFF");
     await run("DROP TRIGGER IF EXISTS trg_delete_orphaned_grids");
     await run(`
@@ -64,13 +67,13 @@ export async function migrate() {
     if (check.length > 0) {
       throw new Error(`Foreign key check failed: ${JSON.stringify(check)}`);
     }
-    console.log("grids table successfully migrated.");
+    log("grids table successfully migrated.");
   } else {
-    console.log("grids table is already using modern schema (no user_id column).");
+    log("grids table is already using modern schema (no user_id column).");
   }
 
   // 3. Assurer la création de la table field_locks et de ses index
-  console.log("Ensuring field_locks table and indexes exist...");
+  log("Ensuring field_locks table and indexes exist...");
   await run(`
     CREATE TABLE IF NOT EXISTS field_locks (
       grid_id    TEXT NOT NULL,
@@ -87,7 +90,7 @@ export async function migrate() {
     "CREATE INDEX IF NOT EXISTS idx_field_locks_expiry ON field_locks(grid_id, expires_at)"
   );
 
-  console.log("Migration complete.");
+  log("Migration complete.");
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

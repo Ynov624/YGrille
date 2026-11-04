@@ -6,6 +6,10 @@ import {
   validateGridMemberRolePayload,
   validateMarkPayload,
   validateRolePayload,
+  validateGridPayload,
+  validateStudentPayload,
+  validatePromoPayload,
+  validatePromoStudentPayload,
 } from "../src/utils/validate.js";
 
 describe("validateLockKeysPayload", () => {
@@ -151,6 +155,160 @@ describe("validateRolePayload", () => {
     assert.throws(
       () => validateRolePayload({ role: "owner" }),
       (err) => err.status === 400
+    );
+  });
+});
+
+describe("validateGridPayload", () => {
+  const validLevels = [
+    { label: "L1", pct: 0 },
+    { label: "L2", pct: 25 },
+    { label: "L3", pct: 50 },
+    { label: "L4", pct: 75 },
+    { label: "L5", pct: 100 },
+  ];
+
+  it("validates and normalizes valid grid definition", () => {
+    const raw = {
+      name: "  Rubric A  ",
+      levels: validLevels,
+      categories: [{ name: "  Cat 1  ", deliverable: " Code " }],
+      criteria: [{ name: "  Crit 1  ", weight: 20, categoryIndex: 0 }],
+    };
+    const clean = validateGridPayload(raw);
+    assert.equal(clean.name, "Rubric A");
+    assert.equal(clean.levels.length, 5);
+    assert.equal(clean.categories[0].name, "Cat 1");
+    assert.equal(clean.categories[0].deliverable, "Code");
+    assert.equal(clean.criteria[0].name, "Crit 1");
+    assert.equal(clean.criteria[0].weight, 20);
+  });
+
+  it("rejects missing grid name with 400", () => {
+    assert.throws(
+      () =>
+        validateGridPayload({
+          name: "  ",
+          levels: validLevels,
+          categories: [{ name: "Cat 1" }],
+          criteria: [{ name: "Crit 1", weight: 20, categoryIndex: 0 }],
+        }),
+      (err) => err.status === 400 && err.details.includes("Le nom de la grille est obligatoire.")
+    );
+  });
+
+  it("rejects level count different from 5 with 400", () => {
+    assert.throws(
+      () =>
+        validateGridPayload({
+          name: "Rubric",
+          levels: validLevels.slice(0, 4),
+          categories: [{ name: "Cat 1" }],
+          criteria: [{ name: "Crit 1", weight: 20, categoryIndex: 0 }],
+        }),
+      (err) =>
+        err.status === 400 &&
+        err.details.includes("La grille doit comporter exactement 5 niveaux d'acquisition.")
+    );
+  });
+
+  it("rejects missing categories with 400", () => {
+    assert.throws(
+      () =>
+        validateGridPayload({
+          name: "Rubric",
+          levels: validLevels,
+          categories: [],
+          criteria: [{ name: "Crit 1", weight: 20, categoryIndex: 0 }],
+        }),
+      (err) => err.status === 400 && err.details.includes("Ajoutez au moins une catégorie.")
+    );
+  });
+
+  it("rejects missing criteria or zero total weight with 400", () => {
+    assert.throws(
+      () =>
+        validateGridPayload({
+          name: "Rubric",
+          levels: validLevels,
+          categories: [{ name: "Cat 1" }],
+          criteria: [],
+        }),
+      (err) => err.status === 400 && err.details.includes("Ajoutez au moins un critère.")
+    );
+    assert.throws(
+      () =>
+        validateGridPayload({
+          name: "Rubric",
+          levels: validLevels,
+          categories: [{ name: "Cat 1" }],
+          criteria: [{ name: "Crit 1", weight: 0, categoryIndex: 0 }],
+        }),
+      (err) =>
+        err.status === 400 &&
+        err.details.includes("La somme des points des critères doit être supérieure à 0.")
+    );
+  });
+
+  it("rejects criteria with invalid categoryIndex with 400", () => {
+    assert.throws(
+      () =>
+        validateGridPayload({
+          name: "Rubric",
+          levels: validLevels,
+          categories: [{ name: "Cat 1" }],
+          criteria: [{ name: "Crit 1", weight: 10, categoryIndex: 99 }],
+        }),
+      (err) =>
+        err.status === 400 &&
+        err.details.includes("Le critère 1 doit être rattaché à une catégorie.")
+    );
+  });
+});
+
+describe("validateStudentPayload", () => {
+  it("validates and normalizes valid student payload", () => {
+    const res = validateStudentPayload({
+      lastName: "  Dupont  ",
+      firstName: "  Jean  ",
+      comment: "  Projet bien mené  ",
+    });
+    assert.deepEqual(res, { lastName: "Dupont", firstName: "Jean", comment: "Projet bien mené" });
+  });
+
+  it("rejects missing lastName with 400", () => {
+    assert.throws(
+      () => validateStudentPayload({ lastName: "  ", firstName: "Jean" }),
+      (err) => err.status === 400 && err.details.includes("Le nom de l'élève est obligatoire.")
+    );
+  });
+});
+
+describe("validatePromoPayload", () => {
+  it("validates valid promo name", () => {
+    assert.deepEqual(validatePromoPayload({ name: "  B3 Informatique  " }), {
+      name: "B3 Informatique",
+    });
+  });
+
+  it("rejects missing or empty promo name with 400", () => {
+    assert.throws(
+      () => validatePromoPayload({ name: "   " }),
+      (err) => err.status === 400 && err.details.includes("Le nom de la promo est obligatoire.")
+    );
+  });
+});
+
+describe("validatePromoStudentPayload", () => {
+  it("validates valid promo student payload", () => {
+    const res = validatePromoStudentPayload({ lastName: "  Curie  ", firstName: "  Marie  " });
+    assert.deepEqual(res, { lastName: "Curie", firstName: "Marie" });
+  });
+
+  it("rejects missing lastName with 400", () => {
+    assert.throws(
+      () => validatePromoStudentPayload({ lastName: "" }),
+      (err) => err.status === 400 && err.details.includes("Le nom de l'élève est obligatoire.")
     );
   });
 });
