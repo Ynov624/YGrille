@@ -7,7 +7,7 @@ import {
   computeGrade,
   formatGrade,
   suggestAppreciation,
-} from "./grade.js";
+} from "../src/features/grids/grade.js";
 
 const sampleLevels = [
   { position: 0, label: "Non acquis", pct: 0 },

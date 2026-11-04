@@ -19,12 +19,23 @@ let clientPromise = null;
  * fonctions serverless de Vercel ; le client Node complet n'est chargé que pour un
  * fichier local.
  */
+export function resetDbClient() {
+  clientPromise = null;
+}
+
 function getClient() {
   clientPromise ??= createDbClient();
   return clientPromise;
 }
 
 async function createDbClient() {
+  if (process.env.NODE_ENV === "test" || process.env.SQLITE_DB_PATH) {
+    const path = process.env.SQLITE_DB_PATH || "file::memory:";
+    const url = path.startsWith("file:") ? path : `file:${path}`;
+    const { createClient } = await import("@libsql/client");
+    return createClient({ url });
+  }
+
   const url = process.env.TURSO_DATABASE_URL;
   if (url) {
     const { createClient } = await import("@libsql/client/web");
@@ -40,6 +51,10 @@ async function createDbClient() {
   mkdirSync(dirname(LOCAL_DB_PATH), { recursive: true });
   const { createClient } = await import("@libsql/client");
   return createClient({ url: `file:${LOCAL_DB_PATH}` });
+}
+
+export async function executeMultiple(sql) {
+  return (await getClient()).executeMultiple(sql);
 }
 
 /** Toutes les lignes d'une requête, en objets simples `{ colonne: valeur }`. */
