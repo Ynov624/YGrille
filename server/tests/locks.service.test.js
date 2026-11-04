@@ -169,8 +169,13 @@ describe("locks.service", () => {
     });
 
     it("ignores empty keys", async () => {
-      await releaseLocks("grid-1", [], "u-owner");
-      await releaseLocks("grid-1", null, "u-owner");
+      await acquireOrRenewLocks("grid-1", ["k1"], "u-owner", "Owner User", 60);
+
+      await assert.doesNotReject(() => releaseLocks("grid-1", [], "u-owner"));
+      await assert.doesNotReject(() => releaseLocks("grid-1", null, "u-owner"));
+
+      const remaining = await all("SELECT lock_key FROM field_locks WHERE grid_id = ?", ["grid-1"]);
+      assert.equal(remaining.length, 1);
     });
   });
 
