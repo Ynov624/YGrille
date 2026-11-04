@@ -17,7 +17,6 @@ export function useEvaluationLocks({
   members,
   setMarks,
   setStudents,
-  setError,
   setComment,
 }) {
   const { user } = useAuth();
@@ -29,12 +28,13 @@ export function useEvaluationLocks({
     setStudents,
   });
 
-  const { activeLocks, heartbeatFailed, acquire, release } = useGridLocks({
-    gridId,
-    membersCount: grid?.members_count ?? 1,
-    currentUserId: user?.id,
-    onLockReleased: handleLockReleased,
-  });
+  const { activeLocks, heartbeatFailed, acquire, release, pollLocks, setActiveLocks } =
+    useGridLocks({
+      gridId,
+      membersCount: grid?.members_count ?? 1,
+      currentUserId: user?.id,
+      onLockReleased: handleLockReleased,
+    });
 
   const structureLock = activeLocks?.["grid:structure"];
   const structureConflict =
@@ -52,7 +52,6 @@ export function useEvaluationLocks({
     acquire,
     release,
     setComment,
-    setError,
   });
 
   const getCriterionLock = useCriterionRowLock({
@@ -64,13 +63,14 @@ export function useEvaluationLocks({
     currentUserId: user?.id,
     acquire,
     release,
-    setError,
   });
 
   return {
     structureConflict,
     heartbeatFailed,
     getCriterionLock,
+    pollLocks,
+    setActiveLocks,
     ...generalLock,
   };
 }

@@ -14,7 +14,6 @@ export function useGeneralCommentLock({
   acquire,
   release,
   setComment,
-  setError,
 }) {
   const generalAcquiredRef = useRef(false);
 
@@ -29,9 +28,6 @@ export function useGeneralCommentLock({
       generalAcquiredRef.current = false;
       setComment(getStoredGeneralComment(mode, current, members));
       e.target.blur();
-      setError(
-        `L'appréciation générale est actuellement verrouillée par ${res.lockedBy || "un autre utilisateur"}.`
-      );
       return;
     }
     generalAcquiredRef.current = true;

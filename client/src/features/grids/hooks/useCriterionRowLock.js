@@ -13,7 +13,6 @@ export function useCriterionRowLock({
   currentUserId,
   acquire,
   release,
-  setError,
 }) {
   return useCallback(
     (criterionId) => {
@@ -25,9 +24,6 @@ export function useCriterionRowLock({
         if (keys.length === 0) return true;
         const res = await acquire(keys);
         if (!res.acquired) {
-          setError(
-            `Ce critère est actuellement verrouillé par ${res.lockedBy || "un autre utilisateur"}.`
-          );
           return false;
         }
         return true;
@@ -41,16 +37,6 @@ export function useCriterionRowLock({
 
       return { isLocked, conflict, onFocusLock, onBlurLock };
     },
-    [
-      mode,
-      current,
-      members,
-      activeLocks,
-      structureConflict,
-      currentUserId,
-      acquire,
-      release,
-      setError,
-    ]
+    [mode, current, members, activeLocks, structureConflict, currentUserId, acquire, release]
   );
 }

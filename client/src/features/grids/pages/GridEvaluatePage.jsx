@@ -123,6 +123,8 @@ export default function GridEvaluatePage() {
     handleGeneralBlur,
     releaseGeneralComment,
     getCriterionLock,
+    pollLocks,
+    setActiveLocks,
   } = useEvaluationLocks({
     gridId: id,
     grid,
@@ -132,7 +134,6 @@ export default function GridEvaluatePage() {
     members,
     setMarks,
     setStudents,
-    setError,
     setComment,
   });
 
@@ -186,6 +187,27 @@ export default function GridEvaluatePage() {
     return ids.length > 0 && ids.every((sid) => studentComplete(sid));
   };
 
+  const handleLockConflict = (err) => {
+    if (err?.status === 423) {
+      const detail = err.details?.[0];
+      if (detail?.lockKey && detail?.userName) {
+        setActiveLocks((prev) => ({
+          ...prev,
+          [detail.lockKey]: {
+            grid_id: id,
+            lock_key: detail.lockKey,
+            user_id: "other",
+            user_name: detail.userName,
+            expires_at: Date.now() + 30_000,
+          },
+        }));
+      }
+      void pollLocks();
+      return true;
+    }
+    return false;
+  };
+
   const saveComment = async () => {
     if (!current || isGeneralLocked) return;
     setSavingComment(true);
@@ -204,6 +226,7 @@ export default function GridEvaluatePage() {
       }
       releaseGeneralComment();
     } catch (err) {
+      if (handleLockConflict(err)) return;
       setError(err.details?.length ? err.details.join(" ") : err.message);
     } finally {
       setSavingComment(false);
@@ -222,6 +245,7 @@ export default function GridEvaluatePage() {
         },
       }));
     } catch (err) {
+      if (handleLockConflict(err)) return;
       setError(err.details?.length ? err.details.join(" ") : err.message);
     }
   };
@@ -244,6 +268,7 @@ export default function GridEvaluatePage() {
         return next;
       });
     } catch (err) {
+      if (handleLockConflict(err)) return;
       setError(err.details?.length ? err.details.join(" ") : err.message);
     }
   };
@@ -264,6 +289,7 @@ export default function GridEvaluatePage() {
         return next;
       });
     } catch (err) {
+      if (handleLockConflict(err)) return;
       setError(err.details?.length ? err.details.join(" ") : err.message);
     }
   };
