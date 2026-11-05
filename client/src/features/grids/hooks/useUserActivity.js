@@ -15,10 +15,12 @@ export function useUserActivity(enabled = true) {
     };
 
     window.addEventListener("pointerdown", update, { passive: true });
+    window.addEventListener("touchstart", update, { passive: true });
     window.addEventListener("keydown", update, { passive: true });
 
     return () => {
       window.removeEventListener("pointerdown", update);
+      window.removeEventListener("touchstart", update);
       window.removeEventListener("keydown", update);
     };
   }, [enabled]);

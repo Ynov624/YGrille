@@ -230,7 +230,9 @@ describe("locks.service", () => {
         () => assertLockPermitted("grid-1", ["eval:student:1:crit:1"], "u-editor"),
         (err) =>
           err.status === 423 &&
-          err.message === "Ce champ est actuellement verrouillé par Owner User."
+          err.message === "Ce champ est actuellement verrouillé par Owner User." &&
+          err.details?.[0]?.lockKey === "eval:student:1:crit:1" &&
+          err.details?.[0]?.userName === "Owner User"
       );
     });
 
