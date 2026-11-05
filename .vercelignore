@@ -1,4 +1,4 @@
-# Fichiers jamais envoyés à Vercel (secrets locaux, artefacts, app desktop).
+# Fichiers jamais envoyés à Vercel (secrets locaux, artefacts).
 node_modules
 release
 client/dist
@@ -7,4 +7,3 @@ client/dist
 .env.*.local
 server/.env
 server/data
-electron

@@ -4,6 +4,5 @@ client/dist/
 .env
 server/.env
 server/data/
-electron/config.js
 .vercel
 .env*

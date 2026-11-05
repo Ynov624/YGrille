@@ -2,7 +2,6 @@
   "name": "grilles-notation",
   "private": true,
   "version": "1.0.0",
-  "main": "electron/main.js",
   "workspaces": [
     "client",
     "server"
@@ -15,11 +14,7 @@
     "test": "node --test",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "electron": "npm run build && electron .",
-    "dist": "npm run build && electron-builder --win",
-    "dist:mac": "npm run build && electron-builder --mac",
-    "dist:linux": "npm run build && electron-builder --linux"
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
@@ -30,12 +25,9 @@
     "resend": "^6.18.0"
   },
   "devDependencies": {
-    "@electron/rebuild": "^4.2.0",
     "@eslint/js": "^9.39.5",
     "autocannon": "^8.0.0",
     "concurrently": "^9.1.0",
-    "electron": "^33.4.11",
-    "electron-builder": "^25.1.8",
     "eslint": "^9.39.5",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
@@ -43,41 +35,5 @@
     "lighthouse": "^13.4.1",
     "prettier": "^3.9.10",
     "puppeteer-core": "^25.5.0"
-  },
-  "build": {
-    "appId": "com.ygrid.grilles-notation",
-    "productName": "YGrid",
-    "asar": false,
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "electron/**/*",
-      "server/src/**/*",
-      "server/package.json",
-      "client/dist/**/*"
-    ],
-    "win": {
-      "target": "nsis"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "perMachine": false
-    },
-    "mac": {
-      "target": [
-        "dmg",
-        "zip"
-      ],
-      "category": "public.app-category.education",
-      "identity": null
-    },
-    "linux": {
-      "target": [
-        "AppImage"
-      ],
-      "category": "Education"
-    }
   }
 }

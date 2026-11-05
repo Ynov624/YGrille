@@ -28,16 +28,6 @@ export default [
       },
     },
   },
-  // Electron CommonJS
-  {
-    files: ["electron/**/*.js"],
-    languageOptions: {
-      sourceType: "commonjs",
-      globals: {
-        ...globals.node,
-      },
-    },
-  },
   // Client-specific configuration
   {
     files: ["client/**/*.{js,jsx}"],

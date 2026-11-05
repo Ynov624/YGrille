@@ -14,7 +14,7 @@ Consultez la documentation technique dans [`docs/`](./docs/README.md) :
 
 - **[Spécification de l'API REST](./docs/api.md)** : Endpoints d'authentification, gestion des grilles, élèves, groupes, notes et administration.
 
-- **[Guide de Déploiement & Exploitation](./docs/deployment.md)** : Variables d'environnement, développement local, Vercel, Docker et Electron.
+- **[Guide de Déploiement & Exploitation](./docs/deployment.md)** : Variables d'environnement, développement local, Vercel et Docker.
 
 ---
 
@@ -27,7 +27,6 @@ Consultez la documentation technique dans [`docs/`](./docs/README.md) :
 | **Base de données**  | SQLite hébergé sur Turso (`@libsql/client`) | Fichier local en dev, cluster cloud HTTP en production               |
 | **Authentification** | JWT + bcrypt + OTP E-mail                   | Validation stricte `@ynov.com`, conformité CNIL, Resend              |
 | **Hébergement**      | Vercel                                      | Client statique sur CDN + API Express en fonction serverless         |
-| **Desktop**          | Electron + electron-builder                 | Application de bureau avec serveur Express autonome intégré          |
 
 ---
 
@@ -45,13 +44,10 @@ YGrille/
 │   ├── vite.config.js         # Proxy de développement /api → http://localhost:3001
 │   ├── src/                   # Code source SPA (pages, composants, hooks, grade.js, pdf.js)
 │   └── tests/                 # Tests unitaires du client (barème, clés de verrou)
-├── server/                    # Backend API (Node.js + Express)
-│   ├── Dockerfile             # Conteneur Node.js
-│   ├── src/                   # API REST, contrôleurs, services, DB et auth
-│   └── tests/                 # Tests d'intégration et unitaires (services, baux, validation)
-└── electron/                  # Intégration desktop Electron
-    ├── main.js                # Processus principal (Express local + Chromium)
-    └── config.example.js      # Exemple de configuration des clés desktop
+└── server/                    # Backend API (Node.js + Express)
+    ├── Dockerfile             # Conteneur Node.js
+    ├── src/                   # API REST, contrôleurs, services, DB et auth
+    └── tests/                 # Tests d'intégration et unitaires (services, baux, validation)
 ```
 
 ## Modèle de données
@@ -191,5 +187,3 @@ npm run build         # Compile l'application cliente pour production
 - [x] Migration SQLite sur Turso et déploiement Vercel
 
 - [x] Rôles en base de données
-
-- [ ] Application Electron sans droits administrateur (obsolète suite à la version web)

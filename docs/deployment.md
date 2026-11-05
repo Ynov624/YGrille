@@ -103,19 +103,3 @@ Le fichier `docker-compose.yml` auto-héberge l'application.
 3. Démarrez les conteneurs : `docker compose up --build -d`.
 
 L'application écoute sur `http://localhost`.
-
-## 5. Build Desktop avec Electron
-
-Electron package l'application pour Windows, macOS ou Linux.
-
-### 5.1. Fonctionnement interne
-
-Electron démarre Express sur `127.0.0.1:17321`. Il crée un `JWT_SECRET` unique. Il charge `config.js` et ouvre Chromium sur `http://localhost:17321/`.
-
-### 5.2. Préparation et compilation
-
-1. Renseignez les clés : `cp electron/config.example.js electron/config.js`.
-
-2. Testez : `npm run electron`.
-
-3. Compilez : `npm run dist` (Windows), `npm run dist:mac` (macOS), `npm run dist:linux` (Linux).

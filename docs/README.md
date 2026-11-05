@@ -38,4 +38,3 @@
 - **Développement local** : Installation, démarrage avec rechargement automatique et mode hors-ligne.
 - **Vercel** : Paramétrage serverless, région `dub1`, routage (`vercel.json`) et synchronisation Turso.
 - **Docker** : Déploiement multi-conteneurs Nginx et Express (`docker-compose.yml`).
-- **Electron** : Compilation multiplateforme [Windows, macOS, Linux](cite: 2).

@@ -116,7 +116,7 @@ function AppShell() {
         </nav>
 
         <div className="sidebar-footer">
-          <ThemeToggle />
+          <ThemeToggle className="full-width" />
           <div className="sidebar-user-row">
             <span className="avatar" aria-hidden="true">
               {initialsOf(user)}
