@@ -505,11 +505,22 @@ select {
 .theme-toggle {
   display: inline-flex;
   align-items: center;
+  width: fit-content;
+  align-self: flex-start;
   padding: 2px;
   background: var(--bg-sunken);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   gap: 2px;
+}
+.theme-toggle.full-width {
+  display: flex;
+  width: 100%;
+  align-self: stretch;
+}
+.theme-toggle.full-width .theme-toggle-btn {
+  flex: 1;
+  width: auto;
 }
 .theme-toggle-btn {
   display: grid;
