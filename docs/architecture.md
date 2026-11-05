@@ -71,13 +71,20 @@ YGrille/
 │   │   │   ├── admin/
 │   │   │   └── grids/
 │   │   │       ├── components/
+│   │   │       ├── hooks/
 │   │   │       ├── pages/
+│   │   │       ├── csvExport.js
 │   │   │       ├── defaults.js
+│   │   │       ├── download.js
 │   │   │       ├── grade.js
-│   │   │       ├── pdf.js
-│   │   │       └── csvExport.js
+│   │   │       ├── jsonTransfer.js
+│   │   │       ├── lockKeys.js
+│   │   │       └── pdf.js
 │   │   ├── styles/
 │   │   └── App.jsx
+│   ├── tests/
+│   │   ├── grade.test.js
+│   │   └── lockKeys.test.js
 │   ├── vite.config.js
 │   └── Dockerfile
 ├── server/
@@ -88,6 +95,7 @@ YGrille/
 │   │   │   ├── connection.js
 │   │   │   ├── schema.sql
 │   │   │   ├── init.js
+│   │   │   ├── migrate.js
 │   │   │   └── setRole.js
 │   │   ├── middleware/
 │   │   ├── routes/
@@ -95,6 +103,12 @@ YGrille/
 │   │   ├── utils/
 │   │   ├── app.js
 │   │   └── index.js
+│   ├── tests/
+│   │   ├── setup.js
+│   │   ├── grids.service.test.js
+│   │   ├── locks.service.test.js
+│   │   ├── migrate.test.js
+│   │   └── validate.test.js
 │   └── Dockerfile
 ├── electron/
 │   ├── main.js
@@ -206,3 +220,41 @@ Le navigateur génère les PDF, ZIP, CSV et JSON. Cela soulage le serveur et év
    - Contient l'ID, l'e-mail et le nom.
 
    - Le serveur vérifie le rôle en base de données pour chaque requête sensible.
+
+## 6. Verrouillage temps réel et concurrence multi-utilisateurs
+
+YGrille intègre un moteur de concurrence par baux temporaires avec détection de collisions pour l'évaluation collaborative simultanée.
+
+### 6.1. Granularité des clés de verrou
+
+Les clés sont dérivées via `lockKeys.js` :
+
+- `grid:structure` : Verrou global de structure (réservé au propriétaire lors de l'édition des critères).
+- `eval:student:<studentId>:crit:<criterionId>` : Verrou de notation par critère et élève.
+- `eval:student:<studentId>:general` : Verrou du champ d'appréciation globale.
+- En mode groupe, les clés couvrent simultanément tous les étudiants membres de l'équipe évaluée.
+
+### 6.2. Cycle de vie des baux et renouvellement
+
+- **Durée de bail (TTL)** : 90 secondes en base SQLite (`field_locks.expires_at`).
+- **Heartbeat automatique (`useLockHeartbeat`)** : Renouvelle les baux actifs toutes les 45 secondes pour les maintenir tant que l'onglet reste ouvert.
+- **Bail actif de critère (`useCriterionRowLock`)** : Les clics sur les boutons de niveau acquièrent un bail de 12 secondes avec temporisation d'inactivité. Un guard en vol (`pendingCriterionIdRef`) annule et libère immédiatement les clés obsolètes en cas d'activations rapides successives.
+- **Libération au démontage** : La fermeture de l'onglet ou le changement de route React Router libère immédiatement les baux serveur.
+
+### 6.3. Polling adaptatif (`useLockPolling`)
+
+La fréquence de synchronisation s'adapte à l'activité de l'utilisateur :
+
+- **Actif** : 2 500 ms (utilisateur actif sans verrous tiers détectés).
+- **Verrouillé** : 2 000 ms (au moins un verrou tiers actif présent).
+- **Inactif** : 4 000 ms (au-delà de 120 s sans interaction pointeur ou tactile).
+- **Arrière-plan** : 30 000 ms (`document.hidden`).
+- En cas de collision concurrente (rejet HTTP `423`), les détails du conflit sont transmis pour afficher un badge indicateur inline sur le critère ou champ concerné.
+
+## 7. Validation et tests automatisés
+
+Le monorepo intègre une suite de tests unitaires et d'intégration native exécutée avec `node --test` :
+
+- **Client** : Calcul du barème (`grade.test.js`), dérivation des clés de verrou et gestion des conflits (`lockKeys.test.js`).
+- **Serveur** : Tests d'autorisation et partage (`grids.service.test.js`), service de baux et transactions atomiques (`locks.service.test.js`), migration de schéma (`migrate.test.js`), et validation des schémas de requêtes (`validate.test.js`).
+- **Commandes** : `npm test` pour exécuter les tests, `npm run lint` pour ESLint et `npm run format:check` pour Prettier.

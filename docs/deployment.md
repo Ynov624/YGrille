@@ -43,6 +43,17 @@ Sans clé Resend locale, le terminal affiche directement le code de vérificatio
 Après l'inscription web, attribuez les droits administrateur avec cette commande :
 `npm run user:role -w server -- prenom.nom@ynov.com admin`.
 
+### 2.4. Tests et validation du code
+
+Avant toute mise en production ou fusion de branche, lancez la validation :
+
+```bash
+npm test              # Exécute les tests automatisés avec le runner natif node:test
+npm run lint          # Contrôle qualité et conformité des règles ESLint
+npm run format:check  # Vérifie l'application du style Prettier
+npm run build         # Valide la compilation de l'application cliente Vite
+```
+
 ## 3. Déploiement Cloud sur Vercel (Production)
 
 Le réseau Edge Vercel distribue le client React. Une fonction serverless Node.js exécute l'API Express.

@@ -9,6 +9,8 @@
 - **Calcul des notes (`grade.js`)** : Barème en 5 niveaux, somme des points des critères, note sur 20 et appréciations automatiques.
 - **Génération de documents** : Bilans PDF (`jspdf`), compression ZIP (`jszip`), exports CSV (Pronote/Excel) et transfert JSON.
 - **Sécurité** : Restriction de domaine (`@ynov.com`), mots de passe conformes CNIL et double vérification par e-mail.
+- **Concurrence temps réel** : Baux distribués TTL 90s, heartbeat 45s, polling adaptatif et verrouillage granulaire par critère.
+- **Tests automatisés** : tests unitaires et d'intégration (`node --test`) couvrant client et serveur.
 
 ## 2. [Base de Données et Schéma SQL](./database.md)
 

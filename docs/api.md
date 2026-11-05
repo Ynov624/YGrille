@@ -316,7 +316,26 @@ Invite un enseignant existant à collaborer sur la grille.
 }
 ```
 
-- **Réponse (201 Created)** : Objet membre créé.
+- **Réponse (201 Created)** : Liste mise à jour des collaborateurs de la grille (`Member[]`).
+
+```json
+[
+  {
+    "id": "c1f7a0b3-4f9e-4e89-a29d-7dbbc9e4c19a",
+    "email": "jean.dupont@ynov.com",
+    "name": "Jean Dupont",
+    "role": "owner",
+    "created_at": "2026-11-03T10:00:00Z"
+  },
+  {
+    "id": "d2e8b1c4-5a0f-5f90-b30e-8eccd0f5d20b",
+    "email": "marie.curie@ynov.com",
+    "name": "Marie Curie",
+    "role": "editor",
+    "created_at": "2026-11-03T11:30:00Z"
+  }
+]
+```
 
 ### 3.9. Modification du rôle d'un collaborateur
 
@@ -332,14 +351,25 @@ Modifie le rôle d'un collaborateur (`owner` ou `editor`).
 }
 ```
 
-- **Réponse (200 OK)** :
+- **Réponse (200 OK)** : Liste mise à jour des collaborateurs de la grille (`Member[]`).
 
 ```json
-{
-  "grid_id": "grd-1",
-  "user_id": "usr-2",
-  "role": "owner"
-}
+[
+  {
+    "id": "c1f7a0b3-4f9e-4e89-a29d-7dbbc9e4c19a",
+    "email": "jean.dupont@ynov.com",
+    "name": "Jean Dupont",
+    "role": "owner",
+    "created_at": "2026-11-03T10:00:00Z"
+  },
+  {
+    "id": "d2e8b1c4-5a0f-5f90-b30e-8eccd0f5d20b",
+    "email": "marie.curie@ynov.com",
+    "name": "Marie Curie",
+    "role": "owner",
+    "created_at": "2026-11-03T11:30:00Z"
+  }
+]
 ```
 
 ### 3.10. Retrait d'un collaborateur
@@ -643,7 +673,19 @@ Tente d'acquérir ou renouveler atomiquement un ensemble de clés de verrouillag
 }
 ```
 
-> Si une écriture (`PUT /marks/...`, `PUT /groups/.../comment`, `PUT /grids/:id`) tente de modifier un champ actif verrouillé par un tiers, l'API rejette l'opération avec `423 Locked`.
+> Si une écriture (`PUT /marks/...`, `PUT /groups/.../comment`, `PUT /grids/:id`) tente de modifier un champ actif verrouillé par un tiers, l'API rejette l'opération avec `423 Locked` en fournissant les métadonnées de collision :
+>
+> ```json
+> {
+>   "error": "Ce champ est actuellement verrouillé par Marie Curie.",
+>   "details": [
+>     {
+>       "lockKey": "eval:student:stu-1:crit:crit-1",
+>       "userName": "Marie Curie"
+>     }
+>   ]
+> }
+> ```
 
 ### 7.3. Libération en lot de verrous
 

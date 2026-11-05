@@ -43,10 +43,12 @@ YGrille/
 ├── client/                    # Frontend (React 18 + Vite)
 │   ├── Dockerfile             # Build Vite → Nginx
 │   ├── vite.config.js         # Proxy de développement /api → http://localhost:3001
-│   └── src/                   # Code source SPA (pages, composants, grade.js, pdf.js)
+│   ├── src/                   # Code source SPA (pages, composants, hooks, grade.js, pdf.js)
+│   └── tests/                 # Tests unitaires du client (barème, clés de verrou)
 ├── server/                    # Backend API (Node.js + Express)
 │   ├── Dockerfile             # Conteneur Node.js
-│   └── src/                   # API REST, contrôleurs, services, DB et auth
+│   ├── src/                   # API REST, contrôleurs, services, DB et auth
+│   └── tests/                 # Tests d'intégration et unitaires (services, baux, validation)
 └── electron/                  # Intégration desktop Electron
     ├── main.js                # Processus principal (Express local + Chromium)
     └── config.example.js      # Exemple de configuration des clés desktop
@@ -130,6 +132,15 @@ docker compose up --build
 ```
 
 Le client écoute sur [http://localhost](http://localhost).
+
+### Tests et qualité de code
+
+```bash
+npm test              # Lance les tests automatisés client et serveur (node --test)
+npm run lint          # Analyse statique ESLint
+npm run format:check  # Vérifie la conformité du formatage Prettier
+npm run build         # Compile l'application cliente pour production
+```
 
 ## Feuille de route
 
