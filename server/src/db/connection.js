@@ -12,7 +12,7 @@ let clientPromise = null;
 
 /**
  * Client libSQL créé à la première requête plutôt qu'à l'import : les variables
- * d'environnement sont lues une fois dotenv chargé (ou renseignées par Electron), et le
+ * d'environnement sont lues une fois dotenv chargé, et le
  * module reste importable sans top-level await.
  *
  * Pour Turso on prend le client « web » (HTTP via fetch, sans binaire natif), adapté aux

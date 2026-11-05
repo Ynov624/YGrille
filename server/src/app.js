@@ -15,7 +15,7 @@ export function createApp() {
   app.use(express.json());
 
   // `CLIENT_DIST` sert le build statique du client (SPA) sur le même port que l'API :
-  // utilisé par le build desktop (Electron) et pour un déploiement mono-serveur, pas en
+  // utilisé pour un déploiement mono-serveur, pas en
   // dev (Vite sert le client séparément et proxie /api).
   const clientDist = process.env.CLIENT_DIST;
   if (clientDist) {

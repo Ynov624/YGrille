@@ -12,15 +12,12 @@ YGrille utilise un monorepo avec **npm workspaces** :
 
 - **Base de données** : SQLite sur Turso ou local.
 
-- **Electron (`electron/`)** : Wrapper desktop optionnel.
-
 - **Vercel (`api/index.mjs` + `vercel.json`)** : Adaptation serverless Vercel.
 
 ```mermaid
 graph TD
     subgraph Clients
         WebBrowser["Navigateur Web (React SPA)"]
-        ElectronApp["Application Desktop (Electron)"]
     end
 
     subgraph "Hébergement Web (Vercel)"
@@ -45,8 +42,6 @@ graph TD
     WebBrowser -->|HTTPS Statique| VercelCDN
     WebBrowser -->|HTTPS API REST| VercelFunction
     VercelFunction --> ExpressApp
-
-    ElectronApp -->|Localhost:17321| ExpressApp
 
     ExpressApp --> AuthMiddleware
     AuthMiddleware --> Controllers
@@ -110,9 +105,6 @@ YGrille/
 │   │   ├── migrate.test.js
 │   │   └── validate.test.js
 │   └── Dockerfile
-├── electron/
-│   ├── main.js
-│   └── config.example.js
 ├── api/
 │   └── index.mjs
 ├── vercel.json
