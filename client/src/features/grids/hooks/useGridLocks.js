@@ -45,13 +45,32 @@ export function useGridLocks({ gridId, membersCount = 1, currentUserId, onLockRe
           for (const key of keys) heldKeysRef.current.add(key);
           setHeartbeatFailed(false);
           void pollLocks();
+        } else {
+          if (res?.lockedBy) {
+            setActiveLocks((prev) => {
+              const next = { ...prev };
+              for (const k of keys) {
+                next[k] = {
+                  grid_id: gridId,
+                  lock_key: k,
+                  user_id: "other",
+                  user_name: res.lockedBy,
+                  expires_at: res.expiresAt || Date.now() + 30_000,
+                };
+              }
+              activeLocksRef.current = next;
+              return next;
+            });
+          }
+          void pollLocks();
         }
         return res;
       } catch (err) {
+        void pollLocks();
         return { acquired: false, error: err.message };
       }
     },
-    [gridId, isShared, pollLocks]
+    [gridId, isShared, pollLocks, setActiveLocks, activeLocksRef]
   );
 
   const release = useCallback(
@@ -83,5 +102,6 @@ export function useGridLocks({ gridId, membersCount = 1, currentUserId, onLockRe
     acquire,
     release,
     pollLocks,
+    setActiveLocks,
   };
 }

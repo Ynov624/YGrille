@@ -116,6 +116,8 @@ export async function assertLockPermitted(gridId, keys, userId) {
       activeConflict.lock_key === "grid:structure"
         ? "La structure du barème est en cours de modification par "
         : "Ce champ est actuellement verrouillé par ";
-    throw locked(`${target}${activeConflict.user_name}.`);
+    throw locked(`${target}${activeConflict.user_name}.`, [
+      { lockKey: activeConflict.lock_key, userName: activeConflict.user_name },
+    ]);
   }
 }

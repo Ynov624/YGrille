@@ -50,7 +50,7 @@ export function useGridMembers(gridId, isOpen, onMembersUpdated) {
       try {
         const updated = await apiAddMember(gridId, { email, role });
         setMembers(updated);
-        onMembersUpdated?.();
+        onMembersUpdated?.(updated);
         return true;
       } catch (err) {
         setError({
@@ -72,7 +72,7 @@ export function useGridMembers(gridId, isOpen, onMembersUpdated) {
       try {
         const updated = await apiUpdateRole(gridId, userId, { role });
         setMembers(updated);
-        onMembersUpdated?.();
+        onMembersUpdated?.(updated);
       } catch (err) {
         setError({
           message: err.message || "Erreur lors de la modification du rôle.",
@@ -91,8 +91,9 @@ export function useGridMembers(gridId, isOpen, onMembersUpdated) {
       setActionLoadingId(userId);
       try {
         await apiRemoveMember(gridId, userId);
-        setMembers((prev) => prev?.filter((m) => m.id !== userId) ?? null);
-        onMembersUpdated?.();
+        const next = members?.filter((m) => m.id !== userId) ?? null;
+        setMembers(next);
+        onMembersUpdated?.(next);
       } catch (err) {
         setError({
           message: err.message || "Erreur lors du retrait du collaborateur.",
@@ -102,7 +103,7 @@ export function useGridMembers(gridId, isOpen, onMembersUpdated) {
         setActionLoadingId(null);
       }
     },
-    [gridId, onMembersUpdated]
+    [gridId, onMembersUpdated, members]
   );
 
   const leave = useCallback(async () => {

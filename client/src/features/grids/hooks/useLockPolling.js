@@ -1,6 +1,19 @@
 import { useEffect, useCallback, useRef, useState } from "react";
 import { fetchActiveLocks } from "../../../api/grids.js";
 
+const POLL_ACTIVE_MS = 2_500;
+const POLL_LOCKED_MS = 2_000;
+const POLL_IDLE_MS = 4_000;
+const POLL_HIDDEN_MS = 30_000;
+const IDLE_THRESHOLD_MS = 120_000;
+const EMPTY_LOCKS = Object.freeze({});
+
+function getPollDelay(isIdle, hasLocks) {
+  if (isIdle) return POLL_IDLE_MS;
+  if (hasLocks) return POLL_LOCKED_MS;
+  return POLL_ACTIVE_MS;
+}
+
 /**
  * Gère le polling adaptatif des verrous actifs avec détection de visibilité et d'inactivité.
  */
@@ -52,17 +65,13 @@ export function useLockPolling({
 
     const runPoll = async () => {
       if (document.hidden) {
-        scheduleNext(10_000);
+        scheduleNext(POLL_HIDDEN_MS);
         return;
       }
-      const isIdle = Date.now() - lastActivityRef.current > 120_000;
-      if (isIdle) {
-        scheduleNext(25_000);
-        return;
-      }
+      const isIdle = Date.now() - lastActivityRef.current > IDLE_THRESHOLD_MS;
       await pollLocks();
       const hasLocks = Object.keys(activeLocksRef.current).length > 0;
-      scheduleNext(hasLocks ? 10_000 : 25_000);
+      scheduleNext(getPollDelay(isIdle, hasLocks));
     };
 
     scheduleNext(0);
@@ -78,11 +87,12 @@ export function useLockPolling({
     return () => {
       if (timerId) clearTimeout(timerId);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      activeLocksRef.current = {};
     };
   }, [enabled, pollLocks, lastActivityRef]);
 
   return {
-    activeLocks,
+    activeLocks: enabled ? activeLocks : EMPTY_LOCKS,
     pollLocks,
     setActiveLocks,
     activeLocksRef,

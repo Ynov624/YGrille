@@ -37,8 +37,12 @@ export default function GridEditPage() {
     let active = true;
 
     acquire(["grid:structure"]).then((res) => {
-      if (active && !res?.acquired) {
-        setStructureLockedBy(res?.lockedBy || "un autre utilisateur");
+      if (active) {
+        if (!res?.acquired) {
+          setStructureLockedBy(res?.lockedBy || "un autre utilisateur");
+        } else {
+          setStructureLockedBy(null);
+        }
       }
     });
 
@@ -160,10 +164,18 @@ export default function GridEditPage() {
           gridId={grid.id}
           gridName={grid.name}
           isOpen={showShareModal}
-          onClose={() => setShowShareModal(false)}
+          onClose={() => {
+            setShowShareModal(false);
+            fetchGrid(id)
+              .then(setGrid)
+              .catch((e) => setLoadError(e.message));
+          }}
           currentUserRole={grid.role}
           onLeftGrid={() => navigate("/")}
-          onMembersUpdated={() => {
+          onMembersUpdated={(updated) => {
+            if (updated?.length) {
+              setGrid((prev) => (prev ? { ...prev, members_count: updated.length } : prev));
+            }
             fetchGrid(id)
               .then(setGrid)
               .catch((e) => setLoadError(e.message));
