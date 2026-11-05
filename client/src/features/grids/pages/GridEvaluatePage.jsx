@@ -136,11 +136,12 @@ export default function GridEvaluatePage() {
     setMarks,
     setStudents,
     setComment,
+    setError,
   });
 
   const handleGeneralFocus = (e) => {
     releaseActiveCriterion?.();
-    baseHandleGeneralFocus(e);
+    void baseHandleGeneralFocus(e);
   };
 
   const goPrev = () => setIndex((i) => Math.max(0, i - 1));
@@ -751,6 +752,14 @@ export default function GridEvaluatePage() {
           }}
           currentUserRole={grid.role}
           onLeftGrid={() => navigate("/")}
+          onMembersUpdated={(updated) => {
+            if (updated?.length) {
+              setGrid((prev) => (prev ? { ...prev, members_count: updated.length } : prev));
+            }
+            fetchGrid(id)
+              .then(setGrid)
+              .catch(() => {});
+          }}
         />
       )}
     </main>

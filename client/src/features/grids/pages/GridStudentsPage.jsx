@@ -500,9 +500,22 @@ export default function GridStudentsPage() {
           gridId={grid.id}
           gridName={grid.name}
           isOpen={showShareModal}
-          onClose={() => setShowShareModal(false)}
+          onClose={() => {
+            setShowShareModal(false);
+            fetchGrid(id)
+              .then(setGrid)
+              .catch(() => {});
+          }}
           currentUserRole={grid.role}
           onLeftGrid={() => navigate("/")}
+          onMembersUpdated={(updated) => {
+            if (updated?.length) {
+              setGrid((prev) => (prev ? { ...prev, members_count: updated.length } : prev));
+            }
+            fetchGrid(id)
+              .then(setGrid)
+              .catch(() => {});
+          }}
         />
       )}
     </main>

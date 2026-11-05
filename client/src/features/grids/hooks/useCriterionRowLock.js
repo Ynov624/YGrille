@@ -15,8 +15,10 @@ export function useCriterionRowLock({
   currentUserId,
   acquire,
   release,
+  setError,
 }) {
   const activeCriterionIdRef = useRef(null);
+  const pendingCriterionIdRef = useRef(null);
   const activeKeysRef = useRef([]);
   const autoReleaseTimerRef = useRef(null);
   const commentFocusedRef = useRef(false);
@@ -31,6 +33,7 @@ export function useCriterionRowLock({
   const releaseActiveCriterion = useCallback(() => {
     clearTimer();
     commentFocusedRef.current = false;
+    pendingCriterionIdRef.current = null;
     if (activeKeysRef.current.length > 0) {
       void release(activeKeysRef.current);
       activeKeysRef.current = [];
@@ -54,9 +57,9 @@ export function useCriterionRowLock({
   // Nettoyage au démontage
   useEffect(() => {
     return () => {
-      clearTimer();
+      releaseActiveCriterion();
     };
-  }, []);
+  }, [releaseActiveCriterion]);
 
   const activateCriterion = useCallback(
     async (criterionId) => {
@@ -65,8 +68,10 @@ export function useCriterionRowLock({
         return true;
       }
 
+      pendingCriterionIdRef.current = criterionId;
+
       // Si un autre critère était actif, le libérer d'abord
-      if (activeCriterionIdRef.current && activeCriterionIdRef.current !== criterionId) {
+      if (activeCriterionIdRef.current) {
         releaseActiveCriterion();
       }
 
@@ -74,7 +79,20 @@ export function useCriterionRowLock({
       if (keys.length === 0) return true;
 
       const res = await acquire(keys);
+
+      // Si une autre activation a démarré pendant que la requête était en vol, libérer ces clés
+      if (pendingCriterionIdRef.current !== criterionId) {
+        if (res?.acquired) {
+          void release(keys);
+        }
+        return false;
+      }
+
       if (!res?.acquired) {
+        pendingCriterionIdRef.current = null;
+        if (!res?.lockedBy && setError) {
+          setError(res?.error || "Impossible de verrouiller le critère (erreur réseau).");
+        }
         return false;
       }
 
@@ -83,7 +101,16 @@ export function useCriterionRowLock({
       scheduleInactivityRelease();
       return true;
     },
-    [mode, current, members, acquire, releaseActiveCriterion, scheduleInactivityRelease]
+    [
+      mode,
+      current,
+      members,
+      acquire,
+      release,
+      releaseActiveCriterion,
+      scheduleInactivityRelease,
+      setError,
+    ]
   );
 
   const getCriterionLock = useCallback(

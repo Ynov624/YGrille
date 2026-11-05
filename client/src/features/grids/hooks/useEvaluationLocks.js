@@ -18,6 +18,7 @@ export function useEvaluationLocks({
   setMarks,
   setStudents,
   setComment,
+  setError,
 }) {
   const { user } = useAuth();
 
@@ -52,6 +53,7 @@ export function useEvaluationLocks({
     acquire,
     release,
     setComment,
+    setError,
   });
 
   const { getCriterionLock, releaseActiveCriterion } = useCriterionRowLock({
@@ -63,6 +65,7 @@ export function useEvaluationLocks({
     currentUserId: user?.id,
     acquire,
     release,
+    setError,
   });
 
   return {

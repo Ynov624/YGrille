@@ -6,6 +6,13 @@ const POLL_LOCKED_MS = 2_000;
 const POLL_IDLE_MS = 4_000;
 const POLL_HIDDEN_MS = 30_000;
 const IDLE_THRESHOLD_MS = 120_000;
+const EMPTY_LOCKS = Object.freeze({});
+
+function getPollDelay(isIdle, hasLocks) {
+  if (isIdle) return POLL_IDLE_MS;
+  if (hasLocks) return POLL_LOCKED_MS;
+  return POLL_ACTIVE_MS;
+}
 
 /**
  * Gère le polling adaptatif des verrous actifs avec détection de visibilité et d'inactivité.
@@ -62,13 +69,9 @@ export function useLockPolling({
         return;
       }
       const isIdle = Date.now() - lastActivityRef.current > IDLE_THRESHOLD_MS;
-      if (isIdle) {
-        scheduleNext(POLL_IDLE_MS);
-        return;
-      }
       await pollLocks();
       const hasLocks = Object.keys(activeLocksRef.current).length > 0;
-      scheduleNext(hasLocks ? POLL_LOCKED_MS : POLL_ACTIVE_MS);
+      scheduleNext(getPollDelay(isIdle, hasLocks));
     };
 
     scheduleNext(0);
@@ -84,11 +87,12 @@ export function useLockPolling({
     return () => {
       if (timerId) clearTimeout(timerId);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      activeLocksRef.current = {};
     };
   }, [enabled, pollLocks, lastActivityRef]);
 
   return {
-    activeLocks,
+    activeLocks: enabled ? activeLocks : EMPTY_LOCKS,
     pollLocks,
     setActiveLocks,
     activeLocksRef,
