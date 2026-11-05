@@ -743,7 +743,12 @@ export default function GridEvaluatePage() {
           gridId={grid.id}
           gridName={grid.name}
           isOpen={showShareModal}
-          onClose={() => setShowShareModal(false)}
+          onClose={() => {
+            setShowShareModal(false);
+            fetchGrid(id)
+              .then(setGrid)
+              .catch(() => {});
+          }}
           currentUserRole={grid.role}
           onLeftGrid={() => navigate("/")}
         />

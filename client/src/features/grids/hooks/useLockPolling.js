@@ -3,7 +3,7 @@ import { fetchActiveLocks } from "../../../api/grids.js";
 
 const POLL_ACTIVE_MS = 2_500;
 const POLL_LOCKED_MS = 2_000;
-const POLL_IDLE_MS = 20_000;
+const POLL_IDLE_MS = 4_000;
 const POLL_HIDDEN_MS = 30_000;
 const IDLE_THRESHOLD_MS = 120_000;
 

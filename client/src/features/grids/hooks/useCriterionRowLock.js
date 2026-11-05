@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { getCriterionLockKeys, findConflict } from "../lockKeys.js";
 
-const CRITERION_INACTIVITY_MS = 8_000;
+const CRITERION_INACTIVITY_MS = 12_000;
 
 /**
  * Gère le bail actif de critère et fournit un accesseur pour chaque ligne d'évaluation.
